@@ -87,7 +87,10 @@ public partial class GeneralTab
 
     private static string ResolveModelsDir(string? path)
     {
-        path ??= AppSettings.DefaultCTranslate2ModelsDir;
+        path = string.IsNullOrWhiteSpace(path)
+            ? AppSettings.DefaultCTranslate2ModelsDir
+            : path.Trim().Trim('"');
+
         return Path.IsPathRooted(path)
             ? path
             : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);

@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Forms = System.Windows.Forms;
 using FluxTranslator.Core;
 
 namespace FluxTranslator.Tabs;
@@ -219,6 +220,64 @@ public partial class GeneralTab
         BtnDownload.Content = "Download Model";
     }
 
+    private async Task CommitModelsDirectoryChangeAsync()
+    {
+        if (_loading || _config is null)
+            return;
+
+        var sanitized = string.IsNullOrWhiteSpace(TbModelsDir.Text)
+            ? AppSettings.DefaultCTranslate2ModelsDir
+            : TbModelsDir.Text.Trim().Trim('"');
+
+        bool changed = !string.Equals(_config.CTranslate2ModelsDir, sanitized, StringComparison.Ordinal);
+        _config.CTranslate2ModelsDir = sanitized;
+
+        var resolved = ResolveModelsDir(sanitized);
+        if (!string.Equals(TbModelsDir.Text, resolved, StringComparison.Ordinal))
+            TbModelsDir.Text = resolved;
+
+        _manager?.Save();
+
+        if (!changed)
+            return;
+
+        _installedModels.Clear();
+        await RefreshModelsListAsync();
+    }
+
+    private async void TbModelsDir_LostFocus(object sender, RoutedEventArgs e)
+        => await CommitModelsDirectoryChangeAsync();
+
+    private async void TbModelsDir_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter)
+            return;
+
+        e.Handled = true;
+        await CommitModelsDirectoryChangeAsync();
+        Keyboard.ClearFocus();
+    }
+
+    private async void BtnBrowseModelsDir_Click(object sender, RoutedEventArgs e)
+    {
+        var currentDir = ResolveModelsDir(_config?.CTranslate2ModelsDir ?? AppSettings.DefaultCTranslate2ModelsDir);
+        using var dialog = new Forms.FolderBrowserDialog
+        {
+            Description = "Select the folder used to store offline translation models.",
+            UseDescriptionForTitle = true,
+            ShowNewFolderButton = true,
+            SelectedPath = Directory.Exists(currentDir)
+                ? currentDir
+                : AppDomain.CurrentDomain.BaseDirectory,
+        };
+
+        if (dialog.ShowDialog() != Forms.DialogResult.OK || string.IsNullOrWhiteSpace(dialog.SelectedPath))
+            return;
+
+        TbModelsDir.Text = dialog.SelectedPath;
+        await CommitModelsDirectoryChangeAsync();
+    }
+
     private async void BtnDeleteModel_Click(object sender, RoutedEventArgs e)
     {
         if (_config is null) return;
@@ -240,8 +299,9 @@ public partial class GeneralTab
         }
     }
 
-    private void BtnOpenModelsDir_Click(object sender, RoutedEventArgs e)
+    private async void BtnOpenModelsDir_Click(object sender, RoutedEventArgs e)
     {
+        await CommitModelsDirectoryChangeAsync();
         var dir = ResolveModelsDir(_config?.CTranslate2ModelsDir ?? AppSettings.DefaultCTranslate2ModelsDir);
         Directory.CreateDirectory(dir);
         Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });

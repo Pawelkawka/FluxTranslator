@@ -71,6 +71,23 @@ public class ConfigManager
 
     private void Sanitize()
     {
+        Config.HotkeyTranslate = string.IsNullOrWhiteSpace(Config.HotkeyTranslate)
+            ? AppSettings.DefaultHotkeyTranslate
+            : Config.HotkeyTranslate.Trim();
+        Config.HotkeyCopy = string.IsNullOrWhiteSpace(Config.HotkeyCopy)
+            ? AppSettings.DefaultHotkeyCopy
+            : Config.HotkeyCopy.Trim();
+        Config.HotkeyKillAll = string.IsNullOrWhiteSpace(Config.HotkeyKillAll)
+            ? AppSettings.DefaultHotkeyKillAll
+            : Config.HotkeyKillAll.Trim();
+
+        if (!Enum.IsDefined(typeof(TranslationEngine), Config.TranslationEngine))
+            Config.TranslationEngine = AppSettings.DefaultTranslationEngine;
+
+        Config.CTranslate2ModelsDir = string.IsNullOrWhiteSpace(Config.CTranslate2ModelsDir)
+            ? AppSettings.DefaultCTranslate2ModelsDir
+            : Config.CTranslate2ModelsDir.Trim().Trim('"');
+
         Config.BackgroundOpacity = Math.Clamp(Config.BackgroundOpacity, 0, 100);
         Config.FontSize          = Math.Clamp(Config.FontSize,          8, 72);
         Config.Padding           = Math.Clamp(Config.Padding,           0, 60);
