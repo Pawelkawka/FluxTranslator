@@ -90,6 +90,10 @@ FluxTranslator includes support for common source and target languages such as:
 - Turkish
 - Arabic
 
+## Note
+
+- The program was developed and tested on Windows 11
+
 ## About
 
 - Developed by Pawel Kawka.
