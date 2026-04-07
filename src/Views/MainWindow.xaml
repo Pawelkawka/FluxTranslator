@@ -1,0 +1,85 @@
+<Window x:Class="FluxTranslator.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:tabs="clr-namespace:FluxTranslator.Tabs"
+        Title="FluxTranslator"
+        Icon="/Resources/icon.ico"
+        Width="960" Height="780"
+        ResizeMode="CanMinimize"
+        MinWidth="640" MinHeight="480"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border x:Name="SttSubTabBarContainer"
+                Grid.Row="0"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel x:Name="SttSubTabBar" Orientation="Horizontal" Margin="4,0">
+                <RadioButton x:Name="SubTabGeneral"
+                             Content="General"
+                             GroupName="SttTabs"
+                             Tag="General"
+                             Style="{StaticResource SubTabButton}"
+                             IsChecked="True"
+                             Checked="SubTab_Checked"/>
+                <RadioButton x:Name="SubTabAppearance"
+                             Content="Appearance"
+                             GroupName="SttTabs"
+                             Tag="Appearance"
+                             Style="{StaticResource SubTabButton}"
+                             Checked="SubTab_Checked"/>
+                <RadioButton x:Name="SubTabBehavior"
+                             Content="Timing"
+                             GroupName="SttTabs"
+                             Tag="Behavior"
+                             Style="{StaticResource SubTabButton}"
+                             Checked="SubTab_Checked"/>
+                <RadioButton x:Name="SubTabHotkeys"
+                             Content="Hotkeys"
+                             GroupName="SttTabs"
+                             Tag="Hotkeys"
+                             Style="{StaticResource SubTabButton}"
+                             Checked="SubTab_Checked"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <tabs:GeneralTab    x:Name="TabGeneral"    Visibility="Visible"/>
+            <tabs:AppearanceTab x:Name="TabAppearance" Visibility="Collapsed"/>
+            <tabs:BehaviorTab   x:Name="TabBehavior"   Visibility="Collapsed"/>
+            <tabs:HotkeysTab    x:Name="TabHotkeys"    Visibility="Collapsed"/>
+        </Grid>
+
+        <Border Grid.Row="2"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="18,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TbStatus"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="11"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+
+                <TextBlock Grid.Column="1"
+                           x:Name="TbVersion"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="11"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

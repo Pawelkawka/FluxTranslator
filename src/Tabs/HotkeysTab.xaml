@@ -1,0 +1,77 @@
+<UserControl x:Class="FluxTranslator.Tabs.HotkeysTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="28,16,28,24">
+
+            <TextBlock Style="{StaticResource H1}" Text="Keyboard Shortcuts"/>
+
+            <TextBlock Style="{StaticResource H2}" Text="Hotkey Configuration"/>
+
+
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="180"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Toggle Translation" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
+                            <TextBlock Text="Start or stop the recording and translation process" Style="{StaticResource SubText}"/>
+                        </StackPanel>
+                        <TextBox x:Name="TbTransHotkey" Grid.Column="1"
+                                 Style="{StaticResource ModernTextBox}"
+                                 VerticalAlignment="Center"
+                                 KeyDown="TbTransHotkey_KeyDown"
+                                 GotFocus="TbHotkey_GotFocus"
+                                 LostFocus="TbHotkey_LostFocus"/>
+                    </Grid>
+                    <Separator Background="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="180"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Copy Translated Text" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
+                            <TextBlock Text="Copy the last translation to the clipboard" Style="{StaticResource SubText}"/>
+                        </StackPanel>
+                        <TextBox x:Name="TbCopyHotkey" Grid.Column="1"
+                                 Style="{StaticResource ModernTextBox}"
+                                 VerticalAlignment="Center"
+                                 KeyDown="TbCopyHotkey_KeyDown"
+                                 GotFocus="TbHotkey_GotFocus"
+                                 LostFocus="TbHotkey_LostFocus"/>
+                    </Grid>
+                    <Separator Background="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="180"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Kill Overlay" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
+                            <TextBlock Text="Immediately stop translation and hide the overlay" Style="{StaticResource SubText}"/>
+                        </StackPanel>
+                        <TextBox x:Name="TbKillHotkey" Grid.Column="1"
+                                 Style="{StaticResource ModernTextBox}"
+                                 VerticalAlignment="Center"
+                                 KeyDown="TbKillHotkey_KeyDown"
+                                 GotFocus="TbHotkey_GotFocus"
+                                 LostFocus="TbHotkey_LostFocus"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <TextBlock x:Name="LblStatus"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       FontSize="11" Margin="0,8,0,0"
+                       TextWrapping="Wrap"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

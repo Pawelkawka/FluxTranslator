@@ -1,0 +1,283 @@
+﻿<UserControl x:Class="FluxTranslator.Tabs.GeneralTab"
+			 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<ScrollViewer VerticalScrollBarVisibility="Auto"
+				  HorizontalScrollBarVisibility="Disabled">
+		<StackPanel Margin="28,16,28,24">
+			<TextBlock Style="{StaticResource H1}" Text="General"/>
+
+			<TextBlock Style="{StaticResource H2}" Text="Translation Engine"/>
+			<Grid Margin="0,0,0,4">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="8"/>
+					<ColumnDefinition Width="*"/>
+				</Grid.ColumnDefinitions>
+
+				<RadioButton x:Name="RbLibreTranslate"
+							 Grid.Column="0"
+							 GroupName="EngineGroup"
+							 Style="{StaticResource EngineCard}"
+							 Checked="RbEngine_Checked">
+					<StackPanel>
+						<TextBlock Text="LibreTranslate"
+								   Foreground="{StaticResource TextPrimaryBrush}"
+								   FontSize="13"
+								   FontWeight="SemiBold"
+								   Margin="0,0,0,6"/>
+						<TextBlock Text="Remote HTTP server — requires Docker or a public instance"
+								   Style="{StaticResource SubText}"
+								   TextWrapping="Wrap"/>
+					</StackPanel>
+				</RadioButton>
+
+				<RadioButton x:Name="RbCTranslate2"
+							 Grid.Column="2"
+							 GroupName="EngineGroup"
+							 Style="{StaticResource EngineCard}"
+							 Checked="RbEngine_Checked">
+					<StackPanel>
+						<TextBlock Text="CTranslate2"
+								   Foreground="{StaticResource TextPrimaryBrush}"
+								   FontSize="13"
+								   FontWeight="SemiBold"
+								   Margin="0,0,0,6"/>
+						<TextBlock Text="Helsinki-NLP opus-mt models — fully offline, no Docker needed"
+								   Style="{StaticResource SubText}"
+								   TextWrapping="Wrap"/>
+					</StackPanel>
+				</RadioButton>
+			</Grid>
+
+			<StackPanel x:Name="LanguagesSection">
+				<TextBlock Style="{StaticResource H2}" Text="Languages"/>
+				<Border Style="{StaticResource SettingCard}">
+					<StackPanel>
+						<Grid x:Name="RowSourceLang" Margin="0,0,0,10">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="180"/>
+							</Grid.ColumnDefinitions>
+
+							<StackPanel VerticalAlignment="Center">
+								<TextBlock Text="Source Language"
+										   Foreground="{StaticResource TextPrimaryBrush}"
+										   FontSize="13"/>
+								<TextBlock Text="Language of your speech"
+										   Style="{StaticResource SubText}"/>
+							</StackPanel>
+
+							<ComboBox x:Name="CbSourceLang"
+									  Grid.Column="1"
+									  Style="{StaticResource ModernComboBox}"
+									  SelectionChanged="CbSourceLang_SelectionChanged"/>
+						</Grid>
+
+						<StackPanel x:Name="RowTargetLang">
+							<Separator Background="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="180"/>
+								</Grid.ColumnDefinitions>
+
+								<StackPanel VerticalAlignment="Center">
+									<TextBlock Text="Target Language"
+											   Foreground="{StaticResource TextPrimaryBrush}"
+											   FontSize="13"/>
+									<TextBlock Text="Language to translate into"
+											   Style="{StaticResource SubText}"/>
+								</StackPanel>
+
+								<ComboBox x:Name="CbTargetLang"
+										  Grid.Column="1"
+										  Style="{StaticResource ModernComboBox}"
+										  SelectionChanged="CbTargetLang_SelectionChanged"/>
+							</Grid>
+						</StackPanel>
+					</StackPanel>
+				</Border>
+			</StackPanel>
+
+			<Grid x:Name="EnginePanelsHost">
+				<StackPanel x:Name="PanelLibreTranslate">
+					<TextBlock Style="{StaticResource H2}" Text="Server"/>
+					<Border Style="{StaticResource SettingCard}">
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="260"/>
+							</Grid.ColumnDefinitions>
+
+							<StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+								<TextBlock Text="Server URL"
+										   Foreground="{StaticResource TextPrimaryBrush}"
+										   FontSize="13"/>
+								<TextBlock Text="Full URL of the /translate endpoint"
+										   Style="{StaticResource SubText}"/>
+							</StackPanel>
+
+							<TextBox x:Name="TbUrl"
+									 Grid.Column="1"
+									 Style="{StaticResource ModernTextBox}"
+									 VerticalAlignment="Center"
+									 TextChanged="TbUrl_TextChanged"/>
+						</Grid>
+					</Border>
+				</StackPanel>
+
+				<StackPanel x:Name="PanelCTranslate2" Visibility="Collapsed">
+					<TextBlock Style="{StaticResource H2}" Text="Offline Models"/>
+
+					<Border Style="{StaticResource SettingCard}" Margin="0,0,0,6">
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="Auto"/>
+							</Grid.ColumnDefinitions>
+
+							<StackPanel VerticalAlignment="Center">
+								<TextBlock Text="Models Directory"
+										   Foreground="{StaticResource TextPrimaryBrush}"
+										   FontSize="13"/>
+								<TextBlock x:Name="TbModelsDir"
+										   Style="{StaticResource SubText}"
+										   TextTrimming="CharacterEllipsis"/>
+							</StackPanel>
+
+							<Button x:Name="BtnOpenModelsDir"
+									Grid.Column="1"
+									Content="Open Folder"
+									Style="{StaticResource GhostButton}"
+									VerticalAlignment="Center"
+									Click="BtnOpenModelsDir_Click"/>
+						</Grid>
+					</Border>
+
+					<Border Style="{StaticResource SettingCard}" Margin="0,0,0,6">
+						<StackPanel>
+							<Grid Margin="0,0,0,10">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="Auto"/>
+								</Grid.ColumnDefinitions>
+
+								<StackPanel VerticalAlignment="Center">
+									<TextBlock Text="Installed Models"
+											   Foreground="{StaticResource TextPrimaryBrush}"
+											   FontSize="13"
+											   FontWeight="SemiBold"/>
+									<TextBlock Text="Click a model row to make it active"
+											   Style="{StaticResource SubText}"/>
+								</StackPanel>
+
+								<Button x:Name="BtnRefreshModels"
+										Grid.Column="1"
+										Content="↺  Refresh"
+										Style="{StaticResource GhostButton}"
+										Click="BtnRefreshModels_Click"/>
+							</Grid>
+
+							<Border x:Name="NoModelsPanel"
+									Background="#222222"
+									CornerRadius="6"
+									Padding="16,18">
+								<StackPanel HorizontalAlignment="Center">
+									<TextBlock Text="No models installed"
+											   Foreground="{StaticResource TextSecondaryBrush}"
+											   FontSize="13"
+											   HorizontalAlignment="Center"
+											   Margin="0,0,0,4"/>
+									<TextBlock Text="Use the Download section below to install a model"
+											   Style="{StaticResource SubText}"
+											   HorizontalAlignment="Center"/>
+								</StackPanel>
+							</Border>
+
+							<StackPanel x:Name="SpModelsList"/>
+						</StackPanel>
+					</Border>
+
+					<Border Style="{StaticResource SettingCard}">
+						<StackPanel>
+							<TextBlock Text="Download Model"
+									   Foreground="{StaticResource TextPrimaryBrush}"
+									   FontSize="13"
+									   FontWeight="SemiBold"
+									   Margin="0,0,0,2"/>
+							<TextBlock Text="Select the source and target language. The matching Helsinki-NLP opus-mt model will be downloaded."
+									   Style="{StaticResource SubText}"
+									   TextWrapping="Wrap"
+									   Margin="0,0,0,12"/>
+
+							<Grid Margin="0,0,0,8">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="32"/>
+									<ColumnDefinition Width="*"/>
+								</Grid.ColumnDefinitions>
+
+								<StackPanel Grid.Column="0">
+									<TextBlock Text="FROM"
+											   Style="{StaticResource SubText}"
+											   FontWeight="SemiBold"
+											   Margin="0,0,0,4"/>
+									<ComboBox x:Name="CbDownloadSrc"
+											  Style="{StaticResource ModernComboBox}"
+											  SelectionChanged="CbDownloadLang_Changed"/>
+								</StackPanel>
+
+								<TextBlock Grid.Column="1"
+										   Text="→"
+										   Foreground="{StaticResource TextSecondaryBrush}"
+										   FontSize="16"
+										   HorizontalAlignment="Center"
+										   VerticalAlignment="Bottom"
+										   Margin="0,0,0,6"/>
+
+								<StackPanel Grid.Column="2">
+									<TextBlock Text="TO"
+											   Style="{StaticResource SubText}"
+											   FontWeight="SemiBold"
+											   Margin="0,0,0,4"/>
+									<ComboBox x:Name="CbDownloadTgt"
+											  Style="{StaticResource ModernComboBox}"
+											  SelectionChanged="CbDownloadLang_Changed"/>
+								</StackPanel>
+							</Grid>
+
+							<Button x:Name="BtnDownload"
+									Content="Download Model"
+									Style="{StaticResource ModernButton}"
+									HorizontalAlignment="Stretch"
+									Click="BtnDownload_Click"/>
+
+							<Border x:Name="DownloadStatusPanel"
+									Visibility="Collapsed"
+									Background="{StaticResource SurfaceBrush}"
+									BorderBrush="{StaticResource BorderBrush}"
+									BorderThickness="1"
+									CornerRadius="6"
+									Padding="12,10"
+									Margin="0,8,0,0">
+								<StackPanel>
+									<TextBlock x:Name="TbDownloadProgress"
+											   Foreground="{StaticResource TextPrimaryBrush}"
+											   FontSize="12"
+											   TextWrapping="Wrap"/>
+									<TextBlock x:Name="TbDownloadError"
+											   Foreground="#FF6B6B"
+											   FontSize="11"
+											   TextWrapping="Wrap"
+											   Visibility="Collapsed"
+											   Margin="0,6,0,0"/>
+								</StackPanel>
+							</Border>
+						</StackPanel>
+					</Border>
+				</StackPanel>
+			</Grid>
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>
