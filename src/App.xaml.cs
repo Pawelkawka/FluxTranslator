@@ -2,11 +2,14 @@ using System.Windows;
 using FluxTranslator.Core;
 using FluxTranslator.TrayIcon;
 using FluxTranslator.Views;
+using System.Threading;
 
 namespace FluxTranslator;
 
 public partial class App : Application
 {
+    private const string SingleInstanceMutexName = "FluxTranslator_SingleInstance_Mutex";
+    private Mutex?                          _singleInstanceMutex;
     private readonly AppUpdateService    _updateService = new();
     private readonly CancellationTokenSource _updateCts = new();
     private TrayIconManager?             _tray;
@@ -15,6 +18,15 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        _singleInstanceMutex = new Mutex(initiallyOwned: true, name: SingleInstanceMutexName, createdNew: out var createdNew);
+        if (!createdNew)
+        {
+            _singleInstanceMutex.Dispose();
+            _singleInstanceMutex = null;
+            Shutdown();
+            return;
+        }
+
         AppLogger.Initialise();
 
         AccentColorHelper.Apply(Resources);
@@ -103,6 +115,9 @@ public partial class App : Application
         _updateCts.Dispose();
         _updateWindow?.Close();
         _tray?.Dispose();
+        _singleInstanceMutex?.ReleaseMutex();
+        _singleInstanceMutex?.Dispose();
+        _singleInstanceMutex = null;
         AppLogger.Info("Application exiting.");
         AppLogger.Close();
         base.OnExit(e);
