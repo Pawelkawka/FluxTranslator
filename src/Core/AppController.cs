@@ -275,8 +275,12 @@ public class AppController : IDisposable
     {
         StatusChanged?.Invoke(new StatusEvent(text, isError, isFinal, durationMs));
     }
-    private static string ResolveModelsDir(string path)
+    private static string ResolveModelsDir(string? path)
     {
+        path = string.IsNullOrWhiteSpace(path)
+            ? AppSettings.DefaultCTranslate2ModelsDir
+            : path.Trim().Trim('"');
+
         if (Path.IsPathRooted(path)) return path;
         return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
     }

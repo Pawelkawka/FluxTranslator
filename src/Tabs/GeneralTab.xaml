@@ -137,21 +137,33 @@
 								<ColumnDefinition Width="Auto"/>
 							</Grid.ColumnDefinitions>
 
-							<StackPanel VerticalAlignment="Center">
+							<StackPanel Grid.Column="0" VerticalAlignment="Center">
 								<TextBlock Text="Models Directory"
 										   Foreground="{StaticResource TextPrimaryBrush}"
 										   FontSize="13"/>
-								<TextBlock x:Name="TbModelsDir"
+								<TextBlock Text="You can use an absolute path or a folder inside the app directory"
 										   Style="{StaticResource SubText}"
-										   TextTrimming="CharacterEllipsis"/>
+										   Margin="0,0,0,6"/>
+								<TextBox x:Name="TbModelsDir"
+										 MinWidth="320"
+										 Style="{StaticResource ModernTextBox}"
+										 VerticalAlignment="Center"
+										 LostFocus="TbModelsDir_LostFocus"
+										 KeyDown="TbModelsDir_KeyDown"/>
 							</StackPanel>
 
-							<Button x:Name="BtnOpenModelsDir"
-									Grid.Column="1"
-									Content="Open Folder"
-									Style="{StaticResource GhostButton}"
-									VerticalAlignment="Center"
-									Click="BtnOpenModelsDir_Click"/>
+							<StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0" VerticalAlignment="Center">
+								<Button x:Name="BtnBrowseModelsDir"
+										Content="Browse"
+										Style="{StaticResource GhostButton}"
+										Margin="0,0,0,4"
+										Click="BtnBrowseModelsDir_Click"/>
+
+								<Button x:Name="BtnOpenModelsDir"
+										Content="Open Folder"
+										Style="{StaticResource GhostButton}"
+										Click="BtnOpenModelsDir_Click"/>
+							</StackPanel>
 						</Grid>
 					</Border>
 

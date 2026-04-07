@@ -1,19 +1,3 @@
-"""
-translate_engine.py — Offline translation using Helsinki-NLP / CTranslate2.
-
-Models are downloaded from HuggingFace (Helsinki-NLP/opus-mt-*) and stored
-locally in CTranslate2 format.  A lightweight in-process cache keeps the
-most-recently-used model resident in RAM so repeated translations do not
-reload from disk on every call.
-
-Public API
-----------
-list_models(models_dir)               → list[str]
-translate(text, src, tgt, models_dir) → str
-start_download(hf_name, models_dir)   → (ok: bool, msg: str)
-get_download_status()                 → dict
-"""
-
 import gc
 import logging
 import os
@@ -23,17 +7,12 @@ from pathlib import Path
 
 log = logging.getLogger("translate_engine")
 
-# ── Lazy library imports ───────────────────────────────────────────────────────
-# ctranslate2 and transformers are optional; the server starts fine without
-# them — it will just return errors for translation requests.
-
 _ct2: object      = None
 _tf:  object      = None
 _HAS_LIBS: bool | None = None
 
 
 def _ensure_libs() -> bool:
-    """Import ctranslate2 / transformers once; cache the result."""
     global _ct2, _tf, _HAS_LIBS
     if _HAS_LIBS is not None:
         return _HAS_LIBS
@@ -42,7 +21,6 @@ def _ensure_libs() -> bool:
         import ctranslate2 as ct2
         import transformers as tf_mod
 
-        # Register MarianTokenizer so AutoTokenizer resolves Helsinki models
         try:
             from transformers import AutoTokenizer, MarianConfig, MarianTokenizer
 
@@ -68,23 +46,18 @@ def _ensure_libs() -> bool:
 
     return _HAS_LIBS  # type: ignore[return-value]
 
-
-# ── In-memory model cache ──────────────────────────────────────────────────────
-# Stores at most one loaded model to keep RAM usage low.
-# key: str(model_path) → (Translator, AutoTokenizer)
-
 _cache: dict = {}
 _cache_lock = threading.Lock()
 
 
-# ── Download state ─────────────────────────────────────────────────────────────
+# Download state
 
 _dl_lock = threading.Lock()
 _dl: dict = {
     "active":   False,
     "model":    "",
     "progress": "",
-    "success":  None,   # None = not finished; True / False = final result
+    "success":  None,
     "error":    "",
 }
 
@@ -95,12 +68,11 @@ def _set_dl(**kw) -> None:
 
 
 def get_download_status() -> dict:
-    """Thread-safe snapshot of the current download state."""
     with _dl_lock:
         return dict(_dl)
 
 
-# ── Internal helpers ───────────────────────────────────────────────────────────
+# Initial
 
 def _ensure_dir(models_dir: str) -> Path:
     p = Path(models_dir)
@@ -116,11 +88,10 @@ def _hf_name(source_lang: str, target_lang: str) -> tuple[str, str, str]:
 
 
 def _safe_dirname(hf_name: str) -> str:
-    """Convert 'Helsinki-NLP/opus-mt-pl-en' → 'Helsinki-NLP_opus-mt-pl-en'."""
     return hf_name.replace("/", "_")
 
 
-# ── Model loading (cached) ─────────────────────────────────────────────────────
+# Model loading
 
 def _load(model_path: Path):
     """Load (or return cached) CTranslate2 translator + tokenizer.
@@ -132,7 +103,6 @@ def _load(model_path: Path):
         if key in _cache:
             return _cache[key]
 
-        # Evict the previous model to free GPU/CPU RAM
         if _cache:
             log.info("Evicting cached model to free memory.")
             _cache.clear()
@@ -142,12 +112,10 @@ def _load(model_path: Path):
             raise RuntimeError(f"Model not found at {model_path}")
 
         log.info("Loading model from %s …", model_path)
-        translator = _ct2.Translator(str(model_path), device="cpu", compute_type="int8")  # type: ignore[union-attr]
+        translator = _ct2.Translator(str(model_path), device="cpu", compute_type="int8")
 
-        # Try loading the tokenizer from local dir first, then from HF hub
         candidates = [
             str(model_path),
-            # e.g.  Helsinki-NLP_opus-mt-pl-en  →  Helsinki-NLP/opus-mt-pl-en
             model_path.name.replace("_", "/", 1),
         ]
         tokenizer = None
@@ -155,7 +123,7 @@ def _load(model_path: Path):
         for candidate in candidates:
             try:
                 local_only = candidate == str(model_path)
-                tokenizer = _tf.AutoTokenizer.from_pretrained(  # type: ignore[union-attr]
+                tokenizer = _tf.AutoTokenizer.from_pretrained(
                     candidate, local_files_only=local_only
                 )
                 log.info("Tokenizer loaded from '%s'.", candidate)
@@ -172,11 +140,7 @@ def _load(model_path: Path):
         _cache[key] = (translator, tokenizer)
         return _cache[key]
 
-
-# ── Public API ─────────────────────────────────────────────────────────────────
-
 def list_models(models_dir: str) -> list[str]:
-    """Return the directory names of all locally converted models."""
     base = Path(models_dir)
     if not base.exists():
         return []
@@ -188,20 +152,6 @@ def list_models(models_dir: str) -> list[str]:
 
 
 def translate(text: str, source_lang: str, target_lang: str, models_dir: str) -> str:
-    """Translate *text* offline.
-
-    Parameters
-    ----------
-    text        : Input text to translate.
-    source_lang : Source language code, e.g. ``"pl"`` or ``"pl-PL"``.
-    target_lang : Target language code, e.g. ``"en"``.
-    models_dir  : Path to the directory that holds downloaded models.
-
-    Raises
-    ------
-    RuntimeError
-        If libraries are not installed or the required model is missing.
-    """
     if not _ensure_libs():
         raise RuntimeError(
             "CTranslate2 libraries are not installed.  "
@@ -225,10 +175,9 @@ def translate(text: str, source_lang: str, target_lang: str, models_dir: str) ->
     return tokenizer.decode(out_ids)
 
 
-# ── Model download ─────────────────────────────────────────────────────────────
+# Download model
 
 def _download_worker(hf_name: str, models_dir: str) -> None:
-    """Background thread: download + convert a HuggingFace model."""
     _set_dl(active=True, model=hf_name, progress="Preparing download...", success=None, error="")
 
     if not _ensure_libs():
@@ -242,9 +191,8 @@ def _download_worker(hf_name: str, models_dir: str) -> None:
     target = base / _safe_dirname(hf_name)
 
     try:
-        # Verify sentencepiece is available (required for Marian tokenizer)
         try:
-            import sentencepiece  # noqa: F401
+            import sentencepiece
         except ImportError:
             _set_dl(
                 active=False, success=False,
@@ -252,7 +200,6 @@ def _download_worker(hf_name: str, models_dir: str) -> None:
             )
             return
 
-        # Step 1 — download raw weights from HuggingFace
         source: str = hf_name
         try:
             from huggingface_hub import snapshot_download
@@ -270,12 +217,12 @@ def _download_worker(hf_name: str, models_dir: str) -> None:
         except Exception as exc:
             log.warning("huggingface_hub download failed (%s); trying ctranslate2 fallback.", exc)
 
-        # Step 2 — convert to CTranslate2 format
+        # convert to CTranslate2 format
         _set_dl(progress="Converting to CTranslate2 format...")
-        converter = _ct2.converters.TransformersConverter(source)  # type: ignore[union-attr]
+        converter = _ct2.converters.TransformersConverter(source)
         converter.convert(str(target), force=True)
 
-        # Step 3 — copy tokenizer sidecar files (source.spm, tokenizer.json, …)
+        # copy tokenizer
         _set_dl(progress="Copying tokenizer files...")
         if os.path.isdir(source):
             for fname in os.listdir(source):
@@ -300,11 +247,6 @@ def _download_worker(hf_name: str, models_dir: str) -> None:
 
 
 def start_download(hf_name: str, models_dir: str) -> tuple[bool, str]:
-    """Start a background model download/conversion.
-
-    Returns ``(True, info_msg)`` if started, or ``(False, reason)`` if another
-    download is already running or the name is invalid.
-    """
     hf_name = hf_name.strip()
     if not hf_name:
         return False, "model_name must not be empty."

@@ -10,8 +10,8 @@ public static class AppSettings
 {
     public const string AppName         = "FluxTranslator";
     public const string AppPublisher    = "PawelKawka";
-    public const string AppBaseVersion  = "1.0.0";
-    public const string AppBuild        = "0704202601";
+    public const string AppBaseVersion  = "1.1.0";
+    public const string AppBuild        = "0704202602";
     public const string AppVersion      = AppBaseVersion + "." + AppBuild;
     public const string ReleaseApiUrl   = "https://api.github.com/repos/PawelKawka/FluxTranslator/releases/latest";
     public const string ReleasesPageUrl = "https://github.com/PawelKawka/FluxTranslator/releases";
