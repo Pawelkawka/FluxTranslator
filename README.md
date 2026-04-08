@@ -1,5 +1,5 @@
 <div align="center">
-   <h1>FluxTranslatorr</h1>
+   <h1>FluxTranslator</h1>
 </div>
 
 FluxTranslator is a Windows desktop overlay for speech to text translation. It listens to your microphone, recognises speech, translates it in real time and displays the result in a compact on screen overlay.
