@@ -1,4 +1,4 @@
-<div align="center">
+[<div align="center">
    <h1>FluxTranslator</h1>
 </div>
 
@@ -105,3 +105,4 @@ FluxTranslator includes support for common source and target languages (ISO 639-
 
 - Developed by Pawel Kawka.
 - Open source and free to use.
+](https://github.com/Pawelkawka)
