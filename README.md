@@ -8,6 +8,17 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
    <img src="assets/demo.gif" alt="FluxTranslator" width="900">
 </p>
 
+<table align="center">
+   <tr>
+      <td><img src="assets/GeneralTab.png" alt="General tab" width="320"></td>
+      <td><img src="assets/AppearanceTab.png" alt="Appearance tab" width="320"></td>
+   </tr>
+   <tr>
+      <td><img src="assets/Timing.png" alt="Timing tab" width="320"></td>
+      <td><img src="assets/HotkeysTab.png" alt="Hotkeys tab" width="320"></td>
+   </tr>
+</table>
+
 ## Features
 
 - **Speech recognition** using your microphone.
