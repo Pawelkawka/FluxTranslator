@@ -1,4 +1,4 @@
-[<div align="center">
+<div align="center">
    <h1>FluxTranslator</h1>
 </div>
 
