@@ -101,10 +101,6 @@ FluxTranslator includes support for common source and target languages (ISO 639-
 > [!WARNING]
 > The program was developed and tested on Windows 11. The program may not work properly and may display graphical glitches on Windows 10.
 
-## Note
-
-- The program was developed and tested on Windows 11
-
 ## About
 
 - Developed by Pawel Kawka.
