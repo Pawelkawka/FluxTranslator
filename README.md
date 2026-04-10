@@ -105,4 +105,3 @@ FluxTranslator includes support for common source and target languages (ISO 639-
 
 - Developed by Pawel Kawka.
 - Open source and free to use.
-](https://github.com/Pawelkawka)
