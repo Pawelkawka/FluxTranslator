@@ -59,6 +59,9 @@ You can customize the output directory:
 .\build.ps1 -OutputDir "set path" 
 ```
 
+> [!IMPORTANT]
+> For FluxTranslator to work correctly `fluxhelper.py` must be enabled and running. Without the FluxHelper backend the program will not function properly.
+
 ## Translation Engines
 
 ### CTranslate2 (Recommended)

@@ -29,7 +29,7 @@ $requirementsFile = Join-Path $PSScriptRoot "src\FluxHelper\requirements.txt"
 if (Test-Path $requirementsFile) {
     Write-Host ""
     Write-Host "Installing Python requirements..." -ForegroundColor Cyan
-    & python -m pip install -r $requirementsFile --quiet
+    & python -m pip install -r $requirementsFile
     if ($LASTEXITCODE -ne 0) {
         Write-Error "pip install failed with exit code $LASTEXITCODE."
     }
