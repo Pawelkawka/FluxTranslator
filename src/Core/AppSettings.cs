@@ -13,8 +13,6 @@ public static class AppSettings
     public const string AppBaseVersion  = "1.1.1";
     public const string AppBuild        = "0804202601";
     public const string AppVersion      = AppBaseVersion + "." + AppBuild;
-    public const string ReleaseApiUrl   = "https://api.github.com/repos/PawelKawka/FluxTranslator/releases/latest";
-    public const string ReleasesPageUrl = "https://github.com/PawelKawka/FluxTranslator/releases";
     public const int    SttPort         = 5001;
 
     public const string DefaultHotkeyTranslate = "Ctrl+M";
