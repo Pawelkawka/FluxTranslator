@@ -21,7 +21,47 @@ public partial class HotkeysTab : UserControl
         TbCopyHotkey.IsKeyboardFocused  ||
         TbKillHotkey.IsKeyboardFocused;
 
-    public HotkeysTab() => InitializeComponent();
+    public HotkeysTab()
+    {
+        InitializeComponent();
+        PreviewMouseDown += HotkeysTab_PreviewMouseDown;
+    }
+
+    private void HotkeysTab_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (!IsAnyHotkeyFocused) return;
+
+        e.Handled = true;
+        var focusedElement = Keyboard.FocusedElement;
+        if (focusedElement is not TextBox focusedTextBox) return;
+
+        string buttonName = e.ChangedButton switch
+        {
+            System.Windows.Input.MouseButton.Left => "LButton",
+            System.Windows.Input.MouseButton.Right => "RButton",
+            System.Windows.Input.MouseButton.Middle => "MButton",
+            System.Windows.Input.MouseButton.XButton1 => "XButton1",
+            System.Windows.Input.MouseButton.XButton2 => "XButton2",
+            _ => null
+        };
+
+        if (buttonName is null) return;
+
+        var mods = new List<string>();
+        if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) mods.Add("Ctrl");
+        if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)) mods.Add("Shift");
+        if (Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt)) mods.Add("Alt");
+
+        mods.Add(buttonName);
+        focusedTextBox.Text = string.Join("+", mods);
+
+        if (focusedTextBox == TbTransHotkey)
+            SaveTranslateHotkey(focusedTextBox.Text);
+        else if (focusedTextBox == TbCopyHotkey)
+            SaveCopyHotkey(focusedTextBox.Text);
+        else if (focusedTextBox == TbKillHotkey)
+            SaveKillHotkey(focusedTextBox.Text);
+    }
 
     public void Initialise(AppConfig config, ConfigManager manager)
     {
@@ -53,7 +93,7 @@ public partial class HotkeysTab : UserControl
             else if (tb == TbCopyHotkey) _prevCopy = tb.Text;
             else if (tb == TbKillHotkey) _prevKill = tb.Text;
         }
-        LblStatus.Text = "Press a key combination (e.g. Ctrl+M). Press ESC to cancel.";
+        LblStatus.Text = "Press a key combination or mouse button (e.g. Ctrl+M or LButton). Press ESC to cancel.";
     }
 
     public void TbHotkey_LostFocus(object s, RoutedEventArgs e)
