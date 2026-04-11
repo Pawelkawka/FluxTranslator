@@ -56,7 +56,7 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 You can customize the output directory:
 ```powershell
-.\build.ps1 -OutputDir "C:\Users\USER\Desktop"\FluxTranslator"
+.\build.ps1 -OutputDir "set path" 
 ```
 
 ## Translation Engines
