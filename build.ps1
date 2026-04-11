@@ -17,8 +17,8 @@ Write-Host "Using .NET SDK $sdkVersion" -ForegroundColor Cyan
 $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
 if (-not $pythonCmd) {
     Write-Error ("Python not found.`n" +
-        "Download and install Python 3.12 from:`n" +
-        "  https://www.python.org/downloads/release/python-3129/`n" +
+        "Download and install Python 3.14 from:`n" +
+        "https://www.python.org/ftp/python/3.14.4/python-3.14.4-amd64.exe / https://www.python.org/downloads/release/python-3144/`n" +
         "Make sure to check 'Add Python to PATH' during installation.")
 }
 

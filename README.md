@@ -35,7 +35,7 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
 ### Prerequisites
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - Windows 11 
-- Python 3.12
+- Python 3.14
 
 ### Build from source
 
