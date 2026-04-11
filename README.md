@@ -45,7 +45,7 @@ Building locally ensures the executable has a unique binary signature on your ma
 2. Open a terminal in the repository.
 3. Run script:
    ```powershell
-   .\build.cmd
+   .\build.ps1
    ```
 5. The compiled output lands in the `build\` folder. Run `FluxTranslator.exe` from there.
 

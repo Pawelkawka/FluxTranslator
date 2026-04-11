@@ -74,6 +74,13 @@ if (Test-Path $backendSrc) {
     Copy-Item -Path $backendSrc -Destination $backendDst -Recurse -Force
 }
 
+$sourceBinDir = Join-Path $PSScriptRoot "src\bin"
+if (Test-Path $sourceBinDir) {
+    Write-Host ""
+    Write-Host "Removing src/bin folder..." -ForegroundColor Cyan
+    Remove-Item -Path $sourceBinDir -Recurse -Force
+}
+
 Write-Host ""
 Write-Host "Build complete." -ForegroundColor Green
 Write-Host "Output folder: $OutputDir" -ForegroundColor Green
