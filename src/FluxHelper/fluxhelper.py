@@ -32,10 +32,7 @@ def get_status():
 def start():
     request_body = request.get_json(silent=True) or {}
     language = request_body.get("language", "pl-PL")
-    max_recording_seconds = int(
-        request_body.get("max_recording_seconds",
-            request_body.get("phrase_time_limit", request_body.get("initial_silence_timeout", 30)))
-    )
+    max_recording_seconds = int(request_body.get("max_recording_seconds", 600))
 
     state.request_stop()
     time.sleep(0.05)

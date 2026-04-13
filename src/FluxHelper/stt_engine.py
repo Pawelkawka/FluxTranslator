@@ -46,20 +46,13 @@ def worker(session_id: int, language: str, max_secs: int) -> None:
 
     try:
         state.update_status("calibrating", "Opening microphone…")
-
-        try:
-            if not _record(0.3, threading.Event()):
-                state.update_status("error", "No audio from microphone.", is_error=True, is_final=True)
-                return
-        except Exception as exc:
-            state.update_status("error", f"Microphone error: {exc}", is_error=True, is_final=True)
-            return
+        _record(0.3, threading.Event())
 
         if stop.is_set() or session_id != state.get_active_session_id():
             return
 
         state.update_status("listening", f"Speak now ({language})…")
-        pcm = _record(min(max_secs, 60), stop)
+        pcm = _record(max_secs, stop)
 
     except OSError as exc:
         state.update_status("error", "No microphone found or access denied.", is_error=True, is_final=True)

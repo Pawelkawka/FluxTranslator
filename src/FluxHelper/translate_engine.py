@@ -167,7 +167,7 @@ def translate(text: str, source_lang: str, target_lang: str, models_dir: str) ->
     results    = translator.translate_batch([tokens])
     out_tokens = results[0].hypotheses[0]
     out_ids    = tokenizer.convert_tokens_to_ids(out_tokens)
-    return tokenizer.decode(out_ids)
+    return tokenizer.decode(out_ids, skip_special_tokens=True)
 
 
 # Download model

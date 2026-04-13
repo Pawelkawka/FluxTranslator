@@ -4,10 +4,6 @@ using System.Threading.Tasks;
 
 namespace FluxTranslator.Core;
 
-/// <summary>
-/// Manages Text-to-Speech (TTS) functionality via the Edge TTS backend.
-/// Automatically speaks translations aloud when enabled.
-/// </summary>
 public class TtsController : IDisposable
 {
     private readonly ConfigManager _configManager;

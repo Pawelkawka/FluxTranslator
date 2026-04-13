@@ -43,29 +43,4 @@ def request_stop() -> None:
     _stop_signal.set()
 
 
-def get() -> dict:
-    return get_status()
 
-
-def set(state: str, text: str, *, is_error: bool = False, is_final: bool = False) -> None:
-    update_status(state, text, is_error=is_error, is_final=is_final)
-
-
-def get_session_id() -> int:
-    return get_active_session_id()
-
-
-def new_session() -> int:
-    return begin_new_session()
-
-
-def get_stop_event() -> threading.Event:
-    return get_stop_signal()
-
-
-def reset_stop_event() -> threading.Event:
-    return reset_stop_signal()
-
-
-def set_stop() -> None:
-    request_stop()

@@ -189,6 +189,7 @@ public class AppController : IDisposable
         }
         _isListening  = false;
         _lastSttState = "idle";
+        await _ttsController.StopAsync();
     }
 
     public void CopyLastTranslation()

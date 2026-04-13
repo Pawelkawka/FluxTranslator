@@ -7,4 +7,3 @@ transformers
 sentencepiece
 huggingface_hub
 edge-tts
-pydub

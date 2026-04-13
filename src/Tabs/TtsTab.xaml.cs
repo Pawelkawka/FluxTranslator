@@ -103,7 +103,7 @@ public partial class TtsTab : UserControl
 
         try
         {
-            var client = new SttBridgeClient(AppSettings.SttPort);
+            using var client = new SttBridgeClient(AppSettings.SttPort);
             var devices = await client.ListDevicesAsync().ConfigureAwait(false);
 
             // Switch back to UI thread for updating controls
@@ -132,8 +132,6 @@ public partial class TtsTab : UserControl
                     idx++;
                 }
             });
-
-            client.Dispose();
         }
         catch (Exception ex)
         {
@@ -145,15 +143,16 @@ public partial class TtsTab : UserControl
     {
         CbLanguage.Items.Clear();
 
+        TtsLanguageInfo[]? cachedLanguages = null;
         try
         {
-            var client = new SttBridgeClient(AppSettings.SttPort);
-            var languages = await client.ListLanguagesAsync().ConfigureAwait(false);
+            using var client = new SttBridgeClient(AppSettings.SttPort);
+            cachedLanguages = await client.ListLanguagesAsync().ConfigureAwait(false);
 
             // Switch back to UI thread for updating controls
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                foreach (var language in languages.OrderBy(l => l.Name))
+                foreach (var language in cachedLanguages.OrderBy(l => l.Name))
                 {
                     CbLanguage.Items.Add(new ComboBoxItem
                     {
@@ -175,18 +174,16 @@ public partial class TtsTab : UserControl
                     idx++;
                 }
             });
-
-            client.Dispose();
         }
         catch (Exception ex)
         {
             AppLogger.Warn($"Could not load TTS languages: {ex.Message}");
         }
 
-        await LoadVoicesForLanguageAsync(_config!.TtsLanguage);
+        await LoadVoicesForLanguageAsync(_config!.TtsLanguage, cachedLanguages);
     }
 
-    private async Task LoadVoicesForLanguageAsync(string langCode)
+    private async Task LoadVoicesForLanguageAsync(string langCode, TtsLanguageInfo[]? cachedLanguages = null)
     {
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
@@ -197,8 +194,16 @@ public partial class TtsTab : UserControl
 
         try
         {
-            var client = new SttBridgeClient(AppSettings.SttPort);
-            var languages = await client.ListLanguagesAsync().ConfigureAwait(false);
+            TtsLanguageInfo[] languages;
+            if (cachedLanguages is not null)
+            {
+                languages = cachedLanguages;
+            }
+            else
+            {
+                using var client = new SttBridgeClient(AppSettings.SttPort);
+                languages = await client.ListLanguagesAsync().ConfigureAwait(false);
+            }
 
             var lang = languages.FirstOrDefault(l => l.Code == langCode);
             if (lang == null)
@@ -233,8 +238,6 @@ public partial class TtsTab : UserControl
                     idx++;
                 }
             });
-
-            client.Dispose();
         }
         catch (Exception ex)
         {

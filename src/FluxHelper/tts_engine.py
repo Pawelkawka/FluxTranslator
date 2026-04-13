@@ -312,7 +312,6 @@ def speak_text(
     tmp_mp3 = None
     tmp_wav = None
 
-    # Build list of voices to try: primary + fallback + English
     voices_to_try = [voice]
     if voice in VOICE_FALLBACKS:
         voices_to_try.append(VOICE_FALLBACKS[voice])
@@ -378,7 +377,7 @@ def speak_text(
                 stream.write(samples)
 
             log.info("TTS playback completed (%.2f seconds)", len(samples) / sample_rate)
-            return  # Success!
+            return
 
         except Exception as exc:
             last_error = exc
@@ -402,7 +401,6 @@ def speak_text(
 
 
 def stop_speaking() -> None:
-    """Stop the current TTS playback."""
     global _is_speaking
 
     _stop_event.set()
