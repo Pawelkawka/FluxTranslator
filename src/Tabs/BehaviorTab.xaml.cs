@@ -30,6 +30,8 @@ public partial class BehaviorTab : UserControl
 
         SlDisplayTime.Value = Math.Clamp(_config.OverlayDisplayTime, SlDisplayTime.Minimum, SlDisplayTime.Maximum);
         LblDisplayTime.Text = $"{SlDisplayTime.Value}s";
+        RbManualMode.IsChecked = _config.EnableManualMode;
+        RbAutoMode.IsChecked = !_config.EnableManualMode;
 
         _loading = false;
     }
@@ -41,6 +43,14 @@ public partial class BehaviorTab : UserControl
 
         if (_loading || _config is null) return;
         _config.OverlayDisplayTime = (int)SlDisplayTime.Value;
+        _manager.Save();
+    }
+
+    private void RecordingMode_Checked(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (_loading || _config is null) return;
+
+        _config.EnableManualMode = RbManualMode.IsChecked == true;
         _manager.Save();
     }
 

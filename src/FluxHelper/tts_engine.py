@@ -295,12 +295,12 @@ def _decode_mp3_to_wav(mp3_path: str, wav_path: str) -> tuple[np.ndarray, int]:
             return samples_float, framerate
 
     except FileNotFoundError:
-        raise RuntimeError("FFmpeg not found/install ffmpeg.")
+        raise RuntimeError("FFmpeg not found. Please install FFmpeg.")
 
 
 def _validate_speak_request(device_id: Optional[int]) -> None:
     if shutil.which("ffmpeg") is None:
-        raise RuntimeError("FFmpeg not found/install ffmpeg.")
+        raise RuntimeError("FFmpeg not found. Please install FFmpeg.")
 
     if device_id is None:
         return

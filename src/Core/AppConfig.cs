@@ -31,7 +31,7 @@ public class AppConfig
     public double InitialSilenceTimeout{ get; set; } = AppSettings.DefaultInitialSilenceTimeout;
     public double SilenceTimeout       { get; set; } = AppSettings.DefaultSilenceTimeout;
 
-    public bool EnableManualMode { get; set; } = false;
+    public bool EnableManualMode { get; set; } = AppSettings.DefaultEnableManualMode;
 
     // tts settings
     public bool  TtsEnabled        { get; set; } = AppSettings.DefaultTtsEnabled;

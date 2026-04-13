@@ -36,6 +36,7 @@ public class SttBridgeClient : IDisposable
         double initialSilenceTimeout,
         double silenceTimeout,
         int maxRecordingSeconds = AppSettings.DefaultMaxRecordingSeconds,
+        bool manualMode = AppSettings.DefaultEnableManualMode,
         CancellationToken ct = default)
     {
         var body = new
@@ -44,6 +45,7 @@ public class SttBridgeClient : IDisposable
             initial_silence_timeout  = initialSilenceTimeout,
             silence_timeout          = silenceTimeout,
             max_recording_seconds    = maxRecordingSeconds,
+            manual_mode              = manualMode,
         };
 
         try
@@ -58,11 +60,14 @@ public class SttBridgeClient : IDisposable
         }
     }
 
-    public async Task<bool> StopAsync(CancellationToken ct = default)
+    public async Task<bool> StopAsync(bool finalizeRecording = false, CancellationToken ct = default)
     {
         try
         {
-            var resp = await _http.PostAsync($"{_baseUrl}/stop", null, ct);
+            var resp = await _http.PostAsJsonAsync(
+                $"{_baseUrl}/stop",
+                new { finalize_recording = finalizeRecording },
+                ct);
             return resp.IsSuccessStatusCode;
         }
         catch (Exception ex)

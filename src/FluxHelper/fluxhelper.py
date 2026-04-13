@@ -35,6 +35,12 @@ def get_status():
 def start():
     request_body = request.get_json(silent=True) or {}
     language = request_body.get("language", "pl-PL")
+    manual_mode_value = request_body.get("manual_mode", True)
+    if isinstance(manual_mode_value, str):
+        manual_mode = manual_mode_value.strip().lower() not in {"0", "false", "no", "off"}
+    else:
+        manual_mode = bool(manual_mode_value)
+
     try:
         requested_max_recording_seconds = int(
             request_body.get("max_recording_seconds", DEFAULT_MAX_RECORDING_SECONDS)
@@ -78,6 +84,7 @@ def start():
             max_recording_seconds,
             initial_silence_timeout,
             silence_timeout,
+            manual_mode,
         ),
         daemon=True,
     ).start()
@@ -86,8 +93,18 @@ def start():
 
 @app.route("/stop", methods=["POST"])
 def stop():
-    state.request_stop()
-    state.update_status("idle", "Recording stopped.", is_final=True)
+    request_body = request.get_json(silent=True) or {}
+    finalize_value = request_body.get("finalize_recording", False)
+    if isinstance(finalize_value, str):
+        finalize_recording = finalize_value.strip().lower() in {"1", "true", "yes", "on"}
+    else:
+        finalize_recording = bool(finalize_value)
+
+    state.request_stop(finalize=finalize_recording)
+    if finalize_recording:
+        state.update_status("stopping", "Finishing recording…")
+    else:
+        state.update_status("idle", "Recording stopped.", is_final=True)
     return jsonify({"ok": True})
 
 @app.route("/translate", methods=["POST"])

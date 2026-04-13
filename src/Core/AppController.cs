@@ -138,7 +138,7 @@ public class AppController : IDisposable
     {
         if (_isListening)
         {
-            await StopListeningAsync();
+            await StopListeningAsync(finalizeRecording: _configManager.Config.EnableManualMode);
         }
         else
         {
@@ -162,7 +162,8 @@ public class AppController : IDisposable
             config.SourceLanguage,
             config.InitialSilenceTimeout,
             config.SilenceTimeout,
-            AppSettings.DefaultMaxRecordingSeconds);
+            AppSettings.DefaultMaxRecordingSeconds,
+            config.EnableManualMode);
 
         if (!ok)
         {
@@ -174,10 +175,15 @@ public class AppController : IDisposable
         _ = Task.Run(() => PollLoopAsync(_pollCts.Token));
     }
 
-    public async Task StopListeningAsync()
+    public async Task StopListeningAsync(bool finalizeRecording = false)
     {
+        if (!finalizeRecording)
+        {
+            _pollCts?.Cancel();
+        }
+
         _isListening = false;
-        await _sttBridgeClient.StopAsync();
+        await _sttBridgeClient.StopAsync(finalizeRecording);
     }
 
     public async Task StopAllAsync()
@@ -240,6 +246,10 @@ public class AppController : IDisposable
                             _isListening = false;
                             return;
 
+                        case "idle" when status.IsFinal:
+                            _isListening = false;
+                            return;
+
                         default:
                             if (!status.IsFinal)
                                 Emit(status.Text, false, false);
@@ -256,7 +266,7 @@ public class AppController : IDisposable
         if (!ct.IsCancellationRequested && DateTime.UtcNow >= deadline)
         {
             AppLogger.Warn("STT polling timed out; stopping active recording.");
-            await _sttBridgeClient.StopAsync();
+            await _sttBridgeClient.StopAsync(finalizeRecording: true);
             Emit("Recording timed out.", true, true);
         }
 

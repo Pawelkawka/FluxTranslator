@@ -38,6 +38,7 @@ public static class AppSettings
     public const double DefaultInitialSilenceTimeout  = 4.0;
     public const double DefaultSilenceTimeout         = 0.2;
     public const int    DefaultMaxRecordingSeconds    = 120;
+    public const bool   DefaultEnableManualMode       = true;
 
     public const string DefaultSourceLanguage  = "pl-PL";
     public const string DefaultTargetLanguage  = "en";

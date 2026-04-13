@@ -36,7 +36,7 @@
                              Style="{StaticResource SubTabButton}"
                              Checked="SubTab_Checked"/>
                 <RadioButton x:Name="SubTabBehavior"
-                             Content="Timing"
+                             Content="Behavior"
                              GroupName="SttTabs"
                              Tag="Behavior"
                              Style="{StaticResource SubTabButton}"

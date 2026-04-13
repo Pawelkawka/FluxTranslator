@@ -64,6 +64,7 @@ def _record_phrase(
     initial_silence_timeout: float,
     silence_timeout: float,
     speech_threshold: float,
+    manual_mode: bool,
 ) -> bytes:
     frames: list[np.ndarray] = []
     chunk = int(SAMPLE_RATE * CHUNK_SECS)
@@ -77,10 +78,15 @@ def _record_phrase(
         dtype="int16",
         blocksize=chunk,
     ) as stream:
-        while not stop.is_set():
+        while True:
             now = time.monotonic()
             if now - start_time >= max_duration:
                 break
+
+            if stop.is_set():
+                if state.should_finalize_on_stop():
+                    break
+                return b""
 
             data, _ = stream.read(chunk)
             data = np.copy(data)
@@ -96,13 +102,15 @@ def _record_phrase(
             if not speech_started and chunk_time - start_time >= initial_silence_timeout:
                 raise SpeechTimeoutError("No speech detected before timeout.")
 
-            if speech_started and chunk_time - last_speech_at >= silence_timeout:
+            if not manual_mode and speech_started and chunk_time - last_speech_at >= silence_timeout:
                 break
 
-    if stop.is_set():
+    if stop.is_set() and not state.should_finalize_on_stop():
         return b""
 
     if not speech_started:
+        if manual_mode:
+            raise SpeechTimeoutError("No speech detected before manual stop.")
         raise SpeechTimeoutError("No speech detected before auto-stop.")
 
     return np.concatenate(frames, axis=0).tobytes() if frames else b""
@@ -120,6 +128,7 @@ def worker(
     max_secs: int,
     initial_silence_timeout: float,
     silence_timeout: float,
+    manual_mode: bool,
 ) -> None:
     recognizer = sr.Recognizer()
     stop = state.get_stop_signal()
@@ -132,13 +141,18 @@ def worker(
         if stop.is_set() or session_id != state.get_active_session_id():
             return
 
-        state.update_status("listening", f"Speak now ({language})…")
+        if manual_mode:
+            state.update_status("listening", f"Speak now ({language}) and press the hotkey again to finish…")
+        else:
+            state.update_status("listening", f"Speak now ({language})…")
+
         pcm = _record_phrase(
             max_secs,
             stop,
             initial_silence_timeout,
             silence_timeout,
             speech_threshold,
+            manual_mode,
         )
 
     except OSError as exc:

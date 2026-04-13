@@ -4,7 +4,9 @@ import logging
 log = logging.getLogger("state")
 
 _status_lock = threading.Lock()
+_stop_lock = threading.Lock()
 _stop_signal = threading.Event()
+_stop_should_finalize = False
 _active_session_id = 0
 _status_snapshot: dict = {"state": "idle", "text": "", "is_error": False, "is_final": True}
 
@@ -34,13 +36,23 @@ def get_stop_signal() -> threading.Event:
 
 
 def reset_stop_signal() -> threading.Event:
-    global _stop_signal
-    _stop_signal = threading.Event()
-    return _stop_signal
+    global _stop_signal, _stop_should_finalize
+    with _stop_lock:
+        _stop_signal = threading.Event()
+        _stop_should_finalize = False
+        return _stop_signal
 
 
-def request_stop() -> None:
-    _stop_signal.set()
+def request_stop(finalize: bool = False) -> None:
+    global _stop_should_finalize
+    with _stop_lock:
+        _stop_should_finalize = finalize
+        _stop_signal.set()
+
+
+def should_finalize_on_stop() -> bool:
+    with _stop_lock:
+        return _stop_should_finalize
 
 
 

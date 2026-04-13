@@ -5,9 +5,9 @@
                   HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="28,16,28,24">
 
-            <TextBlock Style="{StaticResource H1}" Text="Timing"/>
+            <TextBlock Style="{StaticResource H1}" Text="Behavior"/>
 
-            <TextBlock Style="{StaticResource H2}" Text="Timing &amp; Delays"/>
+            <TextBlock Style="{StaticResource H2}" Text="Behavior"/>
             <Border Style="{StaticResource SettingCard}">
                 <StackPanel>
 
@@ -22,6 +22,27 @@
                         <TextBlock x:Name="LblDisplayTime" Grid.Column="2" VerticalAlignment="Center"
                                    Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="6,0,0,0"/>
                     </Grid>
+
+                    <Separator Margin="0,14,0,14"/>
+
+                    <TextBlock Text="Speech Capture Mode"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               FontSize="13"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="Manual mode requires pressing the translate hotkey again to finish recording. Auto mode stops after silence."
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10"/>
+
+                    <StackPanel>
+                        <RadioButton x:Name="RbManualMode"
+                                     Content="Manual mode"
+                                     Margin="0,0,0,8"
+                                     Checked="RecordingMode_Checked"/>
+                        <RadioButton x:Name="RbAutoMode"
+                                     Content="Auto mode"
+                                     Checked="RecordingMode_Checked"/>
+                    </StackPanel>
 
 
                 </StackPanel>
