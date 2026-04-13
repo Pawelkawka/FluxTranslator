@@ -46,7 +46,7 @@ public static class AppSettings
 
     // tts defaults
     public const bool   DefaultTtsEnabled        = false;
-    public const int    DefaultTtsOutputDeviceId = -1; // -1 = system default
+    public const string DefaultTtsOutputDeviceId = ""; // empty = system default
     public const string DefaultTtsLanguage       = "en";
     public const string DefaultTtsVoice          = ""; // empty = use first voice for language
     public const string DefaultTtsRate           = "+0%";

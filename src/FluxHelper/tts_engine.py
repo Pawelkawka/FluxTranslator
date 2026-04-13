@@ -239,25 +239,6 @@ def get_voice_for_language(lang_code: str) -> str:
     return TTS_LANGUAGES["en"]["voices"][0]
 
 
-def list_audio_devices() -> list[dict]:
-    try:
-        devices = sd.query_devices()
-        result = []
-        for i, dev in enumerate(devices):
-            if dev['max_output_channels'] > 0:
-                result.append({
-                    "id": i,
-                    "name": dev['name'],
-                    "channels": dev['max_output_channels'],
-                    "samplerate": int(dev['default_samplerate']) if dev['default_samplerate'] else 44100,
-                    "is_default": i == sd.default.device[1],
-                })
-        return result
-    except Exception as exc:
-        log.error("Error listing audio devices: %s", exc)
-        return []
-
-
 def _decode_mp3_to_wav(mp3_path: str, wav_path: str) -> tuple[np.ndarray, int]:
     try:
         result = subprocess.run(

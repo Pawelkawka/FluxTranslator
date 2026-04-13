@@ -53,9 +53,9 @@ public class TtsController : IDisposable
                 }
             }
 
-            int? deviceId = config.TtsOutputDeviceId == -1 ? null : config.TtsOutputDeviceId;
+            string? deviceId = string.IsNullOrEmpty(config.TtsOutputDeviceId) ? null : config.TtsOutputDeviceId;
 
-            AppLogger.Info($"TTS speaking: voice={voice}, text={text[..Math.Min(50, text.Length)]}");
+            AppLogger.Info($"TTS speaking: voice={voice}, device={deviceId ?? "default"}, text={text[..Math.Min(50, text.Length)]}");
 
             bool success = await _sttBridgeClient.SpeakAsync(
                 text,

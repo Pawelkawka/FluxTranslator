@@ -35,7 +35,7 @@ public class AppConfig
 
     // tts settings
     public bool  TtsEnabled        { get; set; } = AppSettings.DefaultTtsEnabled;
-    public int   TtsOutputDeviceId { get; set; } = AppSettings.DefaultTtsOutputDeviceId;
+    public string TtsOutputDeviceId { get; set; } = AppSettings.DefaultTtsOutputDeviceId;
     public string TtsLanguage      { get; set; } = AppSettings.DefaultTtsLanguage;
     public string TtsVoice         { get; set; } = AppSettings.DefaultTtsVoice;
     public Dictionary<string, string> TtsVoiceSelections { get; set; } = [];

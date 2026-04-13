@@ -177,22 +177,12 @@ def list_languages():
 def get_auto_voice():
     body = request.get_json(silent=True) or {}
     target_language = body.get("target_language", "en")
-    
+
     try:
         voice = tts_engine.get_voice_for_language(target_language)
         return jsonify({"ok": True, "voice": voice})
     except Exception as exc:
         log.error("Error getting auto voice: %s", exc)
-        return jsonify({"ok": False, "error": str(exc)}), 500
-
-
-@app.route("/tts/devices")
-def list_devices():
-    try:
-        devices = tts_engine.list_audio_devices()
-        return jsonify({"ok": True, "devices": devices})
-    except Exception as exc:
-        log.error("Error listing audio devices: %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
 
 

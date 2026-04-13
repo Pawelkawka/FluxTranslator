@@ -152,45 +152,35 @@ public partial class TtsTab : UserControl
         CbOutputDevice.Items.Add(new ComboBoxItem
         {
             Content = "System Default",
-            Tag = -1
+            Tag = ""
         });
 
-        try
+        var devices = AudioDeviceHelper.GetOutputDevices();
+
+        foreach (var device in devices)
         {
-            using var client = new SttBridgeClient(AppSettings.SttPort);
-            var devices = await client.ListDevicesAsync().ConfigureAwait(false);
-
-            // Switch back to UI thread for updating controls
-            await Application.Current.Dispatcher.InvokeAsync(() =>
+            var label = device.IsDefault ? $"{device.Name} (Default)" : device.Name;
+            CbOutputDevice.Items.Add(new ComboBoxItem
             {
-                foreach (var device in devices)
-                {
-                    var label = device.IsDefault ? $"{device.Name} (Default)" : device.Name;
-                    CbOutputDevice.Items.Add(new ComboBoxItem
-                    {
-                        Content = label,
-                        Tag = device.Id
-                    });
-                }
-
-                // current device
-                int targetId = _config!.TtsOutputDeviceId;
-                int idx = 0;
-                foreach (ComboBoxItem item in CbOutputDevice.Items)
-                {
-                    if (item.Tag is int id && id == targetId)
-                    {
-                        CbOutputDevice.SelectedIndex = idx;
-                        break;
-                    }
-                    idx++;
-                }
+                Content = label,
+                Tag = device.Id
             });
         }
-        catch (Exception ex)
+
+        // Select current device
+        string targetId = _config!.TtsOutputDeviceId;
+        int idx = 0;
+        foreach (ComboBoxItem item in CbOutputDevice.Items)
         {
-            AppLogger.Warn($"Could not load TTS devices: {ex.Message}");
+            if (item.Tag is string id && id == targetId)
+            {
+                CbOutputDevice.SelectedIndex = idx;
+                break;
+            }
+            idx++;
         }
+
+        await Task.CompletedTask;
     }
 
     private async Task<bool> LoadLanguagesAsync()
@@ -204,7 +194,6 @@ public partial class TtsTab : UserControl
             using var client = new SttBridgeClient(AppSettings.SttPort);
             cachedLanguages = await client.ListLanguagesAsync().ConfigureAwait(false);
 
-            // Switch back to UI thread for updating controls
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 foreach (var language in cachedLanguages.OrderBy(l => l.Name))
@@ -216,7 +205,6 @@ public partial class TtsTab : UserControl
                     });
                 }
 
-                // select current language
                 string selectedLanguage = SelectComboBoxItemByTag(CbLanguage, _config!.TtsLanguage, AppSettings.DefaultTtsLanguage);
                 if (!string.IsNullOrWhiteSpace(selectedLanguage) && _config.TtsLanguage != selectedLanguage)
                 {
@@ -406,8 +394,8 @@ public partial class TtsTab : UserControl
     private void CbOutputDevice_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_loading || _config is null || CbOutputDevice.SelectedItem is not ComboBoxItem item) return;
-        
-        if (item.Tag is int id)
+
+        if (item.Tag is string id)
         {
             _config.TtsOutputDeviceId = id;
             _manager?.Save();
