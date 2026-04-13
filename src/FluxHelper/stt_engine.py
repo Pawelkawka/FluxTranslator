@@ -142,9 +142,9 @@ def worker(
             return
 
         if manual_mode:
-            state.update_status("listening", f"Speak now ({language}) and press the hotkey again to finish…")
+            state.update_status("listening", f"Speak now ({language}) Manual mode…")
         else:
-            state.update_status("listening", f"Speak now ({language})…")
+            state.update_status("listening", f"Speak now ({language}) Auto mode…")
 
         pcm = _record_phrase(
             max_secs,

@@ -9,10 +9,6 @@
 
             <TextBlock Style="{StaticResource H2}" Text="Hotkey Configuration"/>
 
-            <TextBlock Style="{StaticResource SubText}" 
-                       Text="Supports keyboard combinations and mouse buttons (LButton, RButton, MButton, XButton1, XButton2)"
-                       Margin="0,0,0,12"/>
-
 
             <Border Style="{StaticResource SettingCard}">
                 <StackPanel>

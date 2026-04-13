@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,6 +38,7 @@ public partial class TtsTab : UserControl
     private async void LoadValues()
     {
         _loading = true;
+        bool configChanged = false;
 
         // load tts enabled state
         ChkTtsEnabled.IsChecked = _config!.TtsEnabled;
@@ -51,12 +53,32 @@ public partial class TtsTab : UserControl
         await LoadOutputDevicesAsync();
 
         // load languages and voices
-        await LoadLanguagesAsync();
+        configChanged |= await LoadLanguagesAsync();
 
         // set current values
-        CbRate.SelectedValue = _config.TtsRate;
-        CbVolume.SelectedValue = _config.TtsVolume;
-        CbPitch.SelectedValue = _config.TtsPitch;
+        var selectedRate = SelectComboBoxItemByTag(CbRate, _config.TtsRate, AppSettings.DefaultTtsRate);
+        if (_config.TtsRate != selectedRate)
+        {
+            _config.TtsRate = selectedRate;
+            configChanged = true;
+        }
+
+        var selectedVolume = SelectComboBoxItemByTag(CbVolume, _config.TtsVolume, AppSettings.DefaultTtsVolume);
+        if (_config.TtsVolume != selectedVolume)
+        {
+            _config.TtsVolume = selectedVolume;
+            configChanged = true;
+        }
+
+        var selectedPitch = SelectComboBoxItemByTag(CbPitch, _config.TtsPitch, AppSettings.DefaultTtsPitch);
+        if (_config.TtsPitch != selectedPitch)
+        {
+            _config.TtsPitch = selectedPitch;
+            configChanged = true;
+        }
+
+        if (configChanged)
+            _manager?.Save();
 
         _loading = false;
     }
@@ -64,30 +86,62 @@ public partial class TtsTab : UserControl
     private void LoadRateOptions()
     {
         CbRate.Items.Clear();
-        var rates = new[] { "-50%", "-30%", "-20%", "-10%", "+0%", "+10%", "+20%", "+30%", "+50%" };
-        foreach (var rate in rates)
+        var rates = new[]
         {
-            CbRate.Items.Add(new ComboBoxItem { Content = rate, Tag = rate });
+            (Label: "-50%", Value: "-50%"),
+            (Label: "-30%", Value: "-30%"),
+            (Label: "-20%", Value: "-20%"),
+            (Label: "-10%", Value: "-10%"),
+            (Label: "0", Value: "+0%"),
+            (Label: "+10%", Value: "+10%"),
+            (Label: "+20%", Value: "+20%"),
+            (Label: "+30%", Value: "+30%"),
+            (Label: "+50%", Value: "+50%")
+        };
+
+        foreach (var (label, value) in rates)
+        {
+            CbRate.Items.Add(new ComboBoxItem { Content = label, Tag = value });
         }
     }
 
     private void LoadVolumeOptions()
     {
         CbVolume.Items.Clear();
-        var volumes = new[] { "-50%", "-30%", "-20%", "-10%", "+0%", "+10%", "+20%", "+30%", "+50%" };
-        foreach (var volume in volumes)
+        var volumes = new[]
         {
-            CbVolume.Items.Add(new ComboBoxItem { Content = volume, Tag = volume });
+            (Label: "-50%", Value: "-50%"),
+            (Label: "-30%", Value: "-30%"),
+            (Label: "-20%", Value: "-20%"),
+            (Label: "-10%", Value: "-10%"),
+            (Label: "0%", Value: "+0%"),
+            (Label: "+10%", Value: "+10%"),
+            (Label: "+20%", Value: "+20%"),
+            (Label: "+30%", Value: "+30%"),
+            (Label: "+50%", Value: "+50%")
+        };
+
+        foreach (var (label, value) in volumes)
+        {
+            CbVolume.Items.Add(new ComboBoxItem { Content = label, Tag = value });
         }
     }
 
     private void LoadPitchOptions()
     {
         CbPitch.Items.Clear();
-        var pitches = new[] { "-20Hz", "-10Hz", "+0Hz", "+10Hz", "+20Hz" };
-        foreach (var pitch in pitches)
+        var pitches = new[]
         {
-            CbPitch.Items.Add(new ComboBoxItem { Content = pitch, Tag = pitch });
+            (Label: "-20 Hz", Value: "-20Hz"),
+            (Label: "-10 Hz", Value: "-10Hz"),
+            (Label: "0 Hz", Value: "+0Hz"),
+            (Label: "+10 Hz", Value: "+10Hz"),
+            (Label: "+20 Hz", Value: "+20Hz")
+        };
+
+        foreach (var (label, value) in pitches)
+        {
+            CbPitch.Items.Add(new ComboBoxItem { Content = label, Tag = value });
         }
     }
 
@@ -139,9 +193,10 @@ public partial class TtsTab : UserControl
         }
     }
 
-    private async Task LoadLanguagesAsync()
+    private async Task<bool> LoadLanguagesAsync()
     {
         CbLanguage.Items.Clear();
+        bool configChanged = false;
 
         TtsLanguageInfo[]? cachedLanguages = null;
         try
@@ -162,16 +217,11 @@ public partial class TtsTab : UserControl
                 }
 
                 // select current language
-                string targetLang = _config!.TtsLanguage;
-                int idx = 0;
-                foreach (ComboBoxItem item in CbLanguage.Items)
+                string selectedLanguage = SelectComboBoxItemByTag(CbLanguage, _config!.TtsLanguage, AppSettings.DefaultTtsLanguage);
+                if (!string.IsNullOrWhiteSpace(selectedLanguage) && _config.TtsLanguage != selectedLanguage)
                 {
-                    if (item.Tag is string tag && tag == targetLang)
-                    {
-                        CbLanguage.SelectedIndex = idx;
-                        break;
-                    }
-                    idx++;
+                    _config.TtsLanguage = selectedLanguage;
+                    configChanged = true;
                 }
             });
         }
@@ -180,17 +230,20 @@ public partial class TtsTab : UserControl
             AppLogger.Warn($"Could not load TTS languages: {ex.Message}");
         }
 
-        await LoadVoicesForLanguageAsync(_config!.TtsLanguage, cachedLanguages);
+        configChanged |= await LoadVoicesForLanguageAsync(_config!.TtsLanguage, cachedLanguages);
+        return configChanged;
     }
 
-    private async Task LoadVoicesForLanguageAsync(string langCode, TtsLanguageInfo[]? cachedLanguages = null)
+    private async Task<bool> LoadVoicesForLanguageAsync(string langCode, TtsLanguageInfo[]? cachedLanguages = null)
     {
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
             CbVoice.Items.Clear();
         });
 
-        if (string.IsNullOrEmpty(langCode)) return;
+        if (string.IsNullOrEmpty(langCode)) return false;
+
+        bool configChanged = false;
 
         try
         {
@@ -209,10 +262,11 @@ public partial class TtsTab : UserControl
             if (lang == null)
             {
                 AppLogger.Warn($"Language '{langCode}' not found in TTS languages list");
-                return;
+                return false;
             }
 
             var voices = lang.Voices;
+            string selectedVoice = string.Empty;
 
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
@@ -225,31 +279,103 @@ public partial class TtsTab : UserControl
                     });
                 }
 
-                // select current voice
-                string targetVoice = _config!.TtsVoice;
-                int idx = 0;
-                foreach (ComboBoxItem item in CbVoice.Items)
-                {
-                    if (item.Tag is string tag && tag == targetVoice)
-                    {
-                        CbVoice.SelectedIndex = idx;
-                        break;
-                    }
-                    idx++;
-                }
+                string targetVoice = GetPreferredVoice(langCode, voices);
+                selectedVoice = SelectComboBoxItemByTag(CbVoice, targetVoice);
             });
+
+            if (RememberVoiceSelection(langCode, selectedVoice))
+                configChanged = true;
         }
         catch (Exception ex)
         {
             AppLogger.Warn($"Could not load voices for language '{langCode}': {ex.Message}");
         }
+
+        return configChanged;
+    }
+
+    private string GetPreferredVoice(string langCode, IEnumerable<string> availableVoices)
+    {
+        if (_config is null)
+            return string.Empty;
+
+        var voiceSet = availableVoices
+            .Where(voice => !string.IsNullOrWhiteSpace(voice))
+            .ToHashSet(StringComparer.Ordinal);
+
+        if (_config.TtsVoiceSelections.TryGetValue(langCode, out var savedVoice) && voiceSet.Contains(savedVoice))
+            return savedVoice;
+
+        if (!string.IsNullOrWhiteSpace(_config.TtsVoice) && voiceSet.Contains(_config.TtsVoice))
+            return _config.TtsVoice;
+
+        return availableVoices.FirstOrDefault() ?? string.Empty;
+    }
+
+    private bool RememberVoiceSelection(string langCode, string voice)
+    {
+        if (_config is null || string.IsNullOrWhiteSpace(langCode) || string.IsNullOrWhiteSpace(voice))
+            return false;
+
+        _config.TtsVoiceSelections ??= [];
+        bool hasSavedVoice = _config.TtsVoiceSelections.TryGetValue(langCode, out var savedVoice);
+        bool changed = _config.TtsLanguage != langCode
+            || _config.TtsVoice != voice
+            || !hasSavedVoice
+            || !string.Equals(savedVoice, voice, StringComparison.Ordinal);
+
+        _config.TtsLanguage = langCode;
+        _config.TtsVoice = voice;
+        _config.TtsVoiceSelections[langCode] = voice;
+
+        return changed;
+    }
+
+    private static string SelectComboBoxItemByTag(ComboBox comboBox, string? value, string? fallbackValue = null)
+    {
+        if (TrySelectComboBoxItemByTag(comboBox, value, out var selectedValue))
+            return selectedValue;
+
+        if (TrySelectComboBoxItemByTag(comboBox, fallbackValue, out selectedValue))
+            return selectedValue;
+
+        if (comboBox.Items.Count > 0)
+        {
+            comboBox.SelectedIndex = 0;
+            return (comboBox.SelectedItem as ComboBoxItem)?.Tag as string ?? string.Empty;
+        }
+
+        comboBox.SelectedIndex = -1;
+        return string.Empty;
+    }
+
+    private static bool TrySelectComboBoxItemByTag(ComboBox comboBox, string? value, out string selectedValue)
+    {
+        selectedValue = string.Empty;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        int idx = 0;
+        foreach (ComboBoxItem item in comboBox.Items)
+        {
+            if (item.Tag is string tag && string.Equals(tag, value, StringComparison.Ordinal))
+            {
+                comboBox.SelectedIndex = idx;
+                selectedValue = tag;
+                return true;
+            }
+
+            idx++;
+        }
+
+        return false;
     }
 
     private void UpdateTtsStatus()
     {
         if (ChkTtsEnabled.IsChecked == true)
         {
-            TbTtsStatus.Text = "Voice TTS is enabled translations will be spoken aloud";
+            TbTtsStatus.Text = "Voice TTS is enabled. Translations will be spoken aloud.";
         }
         else
         {
@@ -296,8 +422,8 @@ public partial class TtsTab : UserControl
         if (item.Tag is string langCode)
         {
             _config.TtsLanguage = langCode;
-            _manager?.Save();
             await LoadVoicesForLanguageAsync(langCode);
+            _manager?.Save();
             TtsSettingsChanged?.Invoke();
         }
     }
@@ -308,7 +434,8 @@ public partial class TtsTab : UserControl
         
         if (item.Tag is string voice)
         {
-            _config.TtsVoice = voice;
+            var langCode = (CbLanguage.SelectedItem as ComboBoxItem)?.Tag as string ?? _config.TtsLanguage;
+            RememberVoiceSelection(langCode, voice);
             _manager?.Save();
             TtsSettingsChanged?.Invoke();
         }

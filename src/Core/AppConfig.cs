@@ -38,6 +38,7 @@ public class AppConfig
     public int   TtsOutputDeviceId { get; set; } = AppSettings.DefaultTtsOutputDeviceId;
     public string TtsLanguage      { get; set; } = AppSettings.DefaultTtsLanguage;
     public string TtsVoice         { get; set; } = AppSettings.DefaultTtsVoice;
+    public Dictionary<string, string> TtsVoiceSelections { get; set; } = [];
     public string TtsRate          { get; set; } = AppSettings.DefaultTtsRate;
     public string TtsVolume        { get; set; } = AppSettings.DefaultTtsVolume;
     public string TtsPitch         { get; set; } = AppSettings.DefaultTtsPitch;

@@ -109,5 +109,22 @@ public class ConfigManager
 
         if (!AppSettings.OverlayPositions.ContainsKey(Config.OverlayPosition))
             Config.OverlayPosition = AppSettings.DefaultOverlayPosition;
+
+        Config.TtsLanguage = string.IsNullOrWhiteSpace(Config.TtsLanguage)
+            ? AppSettings.DefaultTtsLanguage
+            : Config.TtsLanguage.Trim();
+        Config.TtsVoice = string.IsNullOrWhiteSpace(Config.TtsVoice)
+            ? AppSettings.DefaultTtsVoice
+            : Config.TtsVoice.Trim();
+        Config.TtsRate = string.IsNullOrWhiteSpace(Config.TtsRate)
+            ? AppSettings.DefaultTtsRate
+            : Config.TtsRate.Trim();
+        Config.TtsVolume = string.IsNullOrWhiteSpace(Config.TtsVolume)
+            ? AppSettings.DefaultTtsVolume
+            : Config.TtsVolume.Trim();
+        Config.TtsPitch = string.IsNullOrWhiteSpace(Config.TtsPitch)
+            ? AppSettings.DefaultTtsPitch
+            : Config.TtsPitch.Trim();
+        Config.TtsVoiceSelections ??= [];
     }
 }

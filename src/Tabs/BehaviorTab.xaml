@@ -7,46 +7,86 @@
 
             <TextBlock Style="{StaticResource H1}" Text="Behavior"/>
 
-            <TextBlock Style="{StaticResource H2}" Text="Behavior"/>
+            <TextBlock Style="{StaticResource H2}" Text="Overlay"/>
             <Border Style="{StaticResource SettingCard}">
-                <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="180"/><ColumnDefinition Width="40"/></Grid.ColumnDefinitions>
-                        <TextBlock Text="Overlay Display Time" Foreground="{StaticResource TextPrimaryBrush}"
-                                   FontSize="13" VerticalAlignment="Center"/>
-                        <Slider x:Name="SlDisplayTime" Grid.Column="1" Minimum="2" Maximum="60" TickFrequency="1"
-                                IsSnapToTickEnabled="True" Style="{StaticResource ModernSlider}"
-                                VerticalAlignment="Center" Margin="0,3,0,0"
-                                ValueChanged="SlDisplayTime_ValueChanged"/>
-                        <TextBlock x:Name="LblDisplayTime" Grid.Column="2" VerticalAlignment="Center"
-                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="6,0,0,0"/>
-                    </Grid>
-
-                    <Separator Margin="0,14,0,14"/>
-
-                    <TextBlock Text="Speech Capture Mode"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               FontSize="13"
-                               Margin="0,0,0,8"/>
-                    <TextBlock Text="Manual mode requires pressing the translate hotkey again to finish recording. Auto mode stops after silence."
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,10"/>
-
-                    <StackPanel>
-                        <RadioButton x:Name="RbManualMode"
-                                     Content="Manual mode"
-                                     Margin="0,0,0,8"
-                                     Checked="RecordingMode_Checked"/>
-                        <RadioButton x:Name="RbAutoMode"
-                                     Content="Auto mode"
-                                     Checked="RecordingMode_Checked"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Overlay Display Time"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="13"/>
+                        <TextBlock Text="How long the translation overlay stays on screen"
+                                   Style="{StaticResource SubText}"
+                                   Margin="0,4,0,0"/>
                     </StackPanel>
 
+                    <Slider x:Name="SlDisplayTime"
+                            Grid.Column="1"
+                            Minimum="2" Maximum="60" TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            Style="{StaticResource ModernSlider}"
+                            VerticalAlignment="Center"
+                            ValueChanged="SlDisplayTime_ValueChanged"/>
 
-                </StackPanel>
+                    <TextBlock x:Name="LblDisplayTime"
+                               Grid.Column="2"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontSize="12"
+                               Margin="6,0,0,0"/>
+                </Grid>
             </Border>
+
+            <TextBlock Style="{StaticResource H2}" Text="Speech Capture"/>
+                       Style="{StaticResource SubText}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,8"/>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <RadioButton x:Name="RbManualMode"
+                             Grid.Column="0"
+                             GroupName="RecordingModeGroup"
+                             Style="{StaticResource EngineCard}"
+                             Checked="RecordingMode_Checked">
+                    <StackPanel>
+                        <TextBlock Text="Manual mode"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,6"/>
+                        <TextBlock Text="Press the hotkey again to stop recording"
+                                   Style="{StaticResource SubText}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <RadioButton x:Name="RbAutoMode"
+                             Grid.Column="2"
+                             GroupName="RecordingModeGroup"
+                             Style="{StaticResource EngineCard}"
+                             Checked="RecordingMode_Checked">
+                    <StackPanel>
+                        <TextBlock Text="Auto mode"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,6"/>
+                        <TextBlock Text="Recording stops automatically after a period of silence"
+                                   Style="{StaticResource SubText}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </RadioButton>
+            </Grid>
 
         </StackPanel>
     </ScrollViewer>
