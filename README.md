@@ -34,16 +34,17 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
 
 ### Prerequisites
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- Windows 11 
+- Windows 11 / 10
 - Python 3.14
 
 ### Build from source
 
-Building locally ensures the executable has a unique binary signature on your machine.
+Building locally ensures the exe has a unique binary signature on your machine.
 
-1. Clone or download this repository.
-2. Open a terminal in the repository.
-3. Run script:
+1. Go to the [Releases](https://github.com/PawelKawka/FluxTranslator/releases) page.
+2. Download the latest source code
+3. Open a terminal in the repository.
+4. Run script:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\build.ps1
    ```
@@ -55,7 +56,7 @@ You can customize the output directory:
 ```
 
 > [!IMPORTANT]
-> For FluxTranslator to work correctly `fluxhelper.py` must be enabled and running. Without the FluxHelper backend the program will not function properly.
+> For FluxTranslator to work correctly `fluxhelper.py` must be running. Without the FluxHelper backend the program will not function properly.
 
 ## Translation Engines
 
@@ -84,7 +85,7 @@ docker run -d --name libretranslate -p 5000:5000 -e LT_LOAD_ONLY=LANG,LANG libre
 
 > [!NOTE]
 > Replace `LANG,LANG` with the languages of your choice. 
-> If you want more languages for example English, Polish and German, use: `LT_LOAD_ONLY=en,pl,de`.
+> Example: `LT_LOAD_ONLY=en,pl,de`
 
 ## Supported Languages
 
@@ -112,9 +113,6 @@ FluxTranslator includes support for common source and target languages (ISO 639-
 | Norwegian | `no` |
 | Turkish | `tr` |
 | Arabic | `ar` |
-
-> [!WARNING]
-> The program was developed and tested on Windows 11. The program may not work properly and may display graphical glitches on Windows 10.
 
 ## About
 
