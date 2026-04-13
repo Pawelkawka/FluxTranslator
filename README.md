@@ -42,8 +42,8 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
 Building locally ensures the exe has a unique binary signature on your machine.
 
 1. Go to the [Releases](https://github.com/PawelKawka/FluxTranslator/releases) page.
-2. Download the latest source code
-3. Open a terminal in the repository.
+2. Download the latest source code.
+3. Open a PowerShell in the repository.
 4. Run script:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\build.ps1
