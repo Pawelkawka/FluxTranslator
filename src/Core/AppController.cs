@@ -13,6 +13,7 @@ public class AppController : IDisposable
     private readonly ConfigManager _configManager;
     private readonly SttBridgeClient _sttBridgeClient;
     private readonly TranslationService _translationService;
+    private readonly TtsController _ttsController;
 
     private Process? _backendProcess;
 
@@ -23,12 +24,16 @@ public class AppController : IDisposable
 
     public bool IsListening => _isListening;
     public string LastTranslation => _lastTranslation;
+    public TtsController Tts => _ttsController;
 
     public AppController(ConfigManager cfg)
     {
         _configManager = cfg;
         _sttBridgeClient = new SttBridgeClient(AppSettings.SttPort);
         _translationService = new TranslationService();
+        _ttsController = new TtsController(cfg);
+        
+        TranslationReady += OnTranslationReady;
     }
 
     public async Task StartBackendAsync()
@@ -271,6 +276,18 @@ public class AppController : IDisposable
         if (ok) TranslationReady?.Invoke(result);
     }
 
+    private async void OnTranslationReady(string translation)
+    {
+        try
+        {
+            await _ttsController.SpeakAsync(translation);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Warn($"TTS failed to speak translation: {ex.Message}");
+        }
+    }
+
     private void Emit(string text, bool isError, bool isFinal, int durationMs = 0)
     {
         StatusChanged?.Invoke(new StatusEvent(text, isError, isFinal, durationMs));
@@ -314,6 +331,7 @@ public class AppController : IDisposable
 
     public async Task<ModelDownloadStatus?> GetModelDownloadStatusAsync(CancellationToken ct = default)
         => await _sttBridgeClient.GetModelDownloadStatusAsync(ct);
+    
     public void Dispose()
     {
         _pollCts?.Cancel();
@@ -330,5 +348,6 @@ public class AppController : IDisposable
         _backendProcess?.Dispose();
         _sttBridgeClient.Dispose();
         _translationService.Dispose();
+        _ttsController.Dispose();
     }
 }

@@ -6,3 +6,5 @@ ctranslate2
 transformers
 sentencepiece
 huggingface_hub
+edge-tts
+pydub

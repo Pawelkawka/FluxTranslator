@@ -8,6 +8,7 @@ from flask import Flask, request, jsonify
 import state
 import stt_engine
 import translate_engine
+import tts_engine
 
 logging.basicConfig(
     level=logging.INFO,
@@ -98,6 +99,98 @@ def download_model():
 @app.route("/models/download/status")
 def download_status():
     return jsonify(translate_engine.get_download_status())
+
+
+# tts endpoints
+
+@app.route("/tts/voices")
+def list_voices():
+    try:
+        voices = tts_engine.list_voices_sync()
+        return jsonify({"ok": True, "voices": voices})
+    except Exception as exc:
+        log.error("Error listing TTS voices: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@app.route("/tts/languages")
+def list_languages():
+    try:
+        languages = tts_engine.get_available_languages()
+        return jsonify({"ok": True, "languages": languages})
+    except Exception as exc:
+        log.error("Error listing TTS languages: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@app.route("/tts/voice/auto", methods=["POST"])
+def get_auto_voice():
+    body = request.get_json(silent=True) or {}
+    target_language = body.get("target_language", "en")
+    
+    try:
+        voice = tts_engine.get_voice_for_language(target_language)
+        return jsonify({"ok": True, "voice": voice})
+    except Exception as exc:
+        log.error("Error getting auto voice: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@app.route("/tts/devices")
+def list_devices():
+    try:
+        devices = tts_engine.list_audio_devices()
+        return jsonify({"ok": True, "devices": devices})
+    except Exception as exc:
+        log.error("Error listing audio devices: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@app.route("/tts/speak", methods=["POST"])
+def speak():
+    body = request.get_json(silent=True) or {}
+    text = body.get("text", "").strip()
+    voice = body.get("voice", "en-US-EmmaMultilingualNeural")
+    device_id = body.get("device_id")  # none = default
+    rate = body.get("rate", "+0%")
+    volume = body.get("volume", "+0%")
+    pitch = body.get("pitch", "+0Hz")
+    
+    if not text:
+        return jsonify({"ok": False, "error": "No text provided."}), 400
+    
+    try:
+        threading.Thread(
+            target=tts_engine.speak_text,
+            args=(text, voice, device_id, rate, volume, pitch),
+            daemon=True,
+        ).start()
+        
+        log.info("TTS started: voice=%s, text=%r", voice, text[:50])
+        return jsonify({"ok": True, "message": "TTS started"})
+    except Exception as exc:
+        log.error("Error starting TTS: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@app.route("/tts/stop", methods=["POST"])
+def stop_tts():
+    try:
+        tts_engine.stop_speaking()
+        return jsonify({"ok": True, "message": "TTS stopped"})
+    except Exception as exc:
+        log.error("Error stopping TTS: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@app.route("/tts/status")
+def tts_status():
+    try:
+        speaking = tts_engine.is_currently_speaking()
+        return jsonify({"ok": True, "speaking": speaking})
+    except Exception as exc:
+        log.error("Error getting TTS status: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
 
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 5001

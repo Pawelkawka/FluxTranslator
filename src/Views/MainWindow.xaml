@@ -47,6 +47,12 @@
                              Tag="Hotkeys"
                              Style="{StaticResource SubTabButton}"
                              Checked="SubTab_Checked"/>
+                <RadioButton x:Name="SubTabTts"
+                             Content="Voice TTS"
+                             GroupName="SttTabs"
+                             Tag="Tts"
+                             Style="{StaticResource SubTabButton}"
+                             Checked="SubTab_Checked"/>
             </StackPanel>
         </Border>
 
@@ -55,6 +61,7 @@
             <tabs:AppearanceTab x:Name="TabAppearance" Visibility="Collapsed"/>
             <tabs:BehaviorTab   x:Name="TabBehavior"   Visibility="Collapsed"/>
             <tabs:HotkeysTab    x:Name="TabHotkeys"    Visibility="Collapsed"/>
+            <tabs:TtsTab        x:Name="TabTts"        Visibility="Collapsed"/>
         </Grid>
 
         <Border Grid.Row="2"

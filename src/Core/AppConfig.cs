@@ -32,4 +32,13 @@ public class AppConfig
     public double SilenceTimeout       { get; set; } = AppSettings.DefaultSilenceTimeout;
 
     public bool EnableManualMode { get; set; } = false;
+
+    // tts settings
+    public bool  TtsEnabled        { get; set; } = AppSettings.DefaultTtsEnabled;
+    public int   TtsOutputDeviceId { get; set; } = AppSettings.DefaultTtsOutputDeviceId;
+    public string TtsLanguage      { get; set; } = AppSettings.DefaultTtsLanguage;
+    public string TtsVoice         { get; set; } = AppSettings.DefaultTtsVoice;
+    public string TtsRate          { get; set; } = AppSettings.DefaultTtsRate;
+    public string TtsVolume        { get; set; } = AppSettings.DefaultTtsVolume;
+    public string TtsPitch         { get; set; } = AppSettings.DefaultTtsPitch;
 }

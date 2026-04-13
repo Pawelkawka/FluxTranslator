@@ -10,8 +10,8 @@ public static class AppSettings
 {
     public const string AppName         = "FluxTranslator";
     public const string AppPublisher    = "PawelKawka";
-    public const string AppBaseVersion  = "1.2.1";
-    public const string AppBuild        = "1104202602";
+    public const string AppBaseVersion  = "1.3.0";
+    public const string AppBuild        = "TESTING202601";
     public const string AppVersion      = AppBaseVersion + "." + AppBuild;
     public const int    SttPort         = 5001;
 
@@ -41,6 +41,15 @@ public static class AppSettings
     public const string DefaultSourceLanguage  = "pl-PL";
     public const string DefaultTargetLanguage  = "en";
     public const string DefaultOverlayPosition = "top_center";
+
+    // tts defaults
+    public const bool   DefaultTtsEnabled        = false;
+    public const int    DefaultTtsOutputDeviceId = -1; // -1 = system default
+    public const string DefaultTtsLanguage       = "en";
+    public const string DefaultTtsVoice          = ""; // empty = use first voice for language
+    public const string DefaultTtsRate           = "+0%";
+    public const string DefaultTtsVolume         = "+0%";
+    public const string DefaultTtsPitch          = "+0Hz";
 
     public static readonly IReadOnlyDictionary<string, string> SourceLanguages =
         new Dictionary<string, string>

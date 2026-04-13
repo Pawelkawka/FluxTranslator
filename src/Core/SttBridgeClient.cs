@@ -147,10 +147,154 @@ public class SttBridgeClient : IDisposable
         }
     }
 
-    public void Dispose() => _http.Dispose();
+    //tts methods
+
+    public async Task<TtsVoiceInfo[]> ListVoicesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var resp = await _http.GetFromJsonAsync<TtsVoicesResponse>($"{_baseUrl}/tts/voices", ct);
+            return resp?.Voices ?? [];
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"SttBridge.ListVoices error: {ex.Message}");
+            return [];
+        }
+    }
+
+    public async Task<TtsLanguageInfo[]> ListLanguagesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var resp = await _http.GetFromJsonAsync<TtsLanguagesResponse>($"{_baseUrl}/tts/languages", ct);
+            return resp?.Languages ?? [];
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"SttBridge.ListLanguages error: {ex.Message}");
+            return [];
+        }
+    }
+
+    public async Task<(bool ok, string voice)> GetAutoVoiceAsync(string targetLanguage, CancellationToken ct = default)
+    {
+        var body = new { target_language = targetLanguage };
+        try
+        {
+            var resp = await _http.PostAsJsonAsync($"{_baseUrl}/tts/voice/auto", body, ct);
+            var json = await resp.Content.ReadFromJsonAsync<TtsAutoVoiceResponse>(ct);
+            return (json?.Ok ?? false, json?.Voice ?? string.Empty);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"SttBridge.GetAutoVoice error: {ex.Message}");
+            return (false, string.Empty);
+        }
+    }
+
+    public async Task<TtsDeviceInfo[]> ListDevicesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var resp = await _http.GetFromJsonAsync<TtsDevicesResponse>($"{_baseUrl}/tts/devices", ct);
+            return resp?.Devices ?? [];
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"SttBridge.ListDevices error: {ex.Message}");
+            return [];
+        }
+    }
+
+    public async Task<bool> SpeakAsync(
+        string text,
+        string voice,
+        int? deviceId = null,
+        string rate = "+0%",
+        string volume = "+0%",
+        string pitch = "+0Hz",
+        CancellationToken ct = default)
+    {
+        var body = new
+        {
+            text,
+            voice,
+            device_id = deviceId,
+            rate,
+            volume,
+            pitch,
+        };
+
+        try
+        {
+            var resp = await _http.PostAsJsonAsync($"{_baseUrl}/tts/speak", body, ct);
+            return resp.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"SttBridge.Speak error: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> StopSpeakingAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var resp = await _http.PostAsync($"{_baseUrl}/tts/stop", null, ct);
+            return resp.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"SttBridge.StopSpeaking error: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> IsSpeakingAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var resp = await _http.GetFromJsonAsync<TtsStatusResponse>($"{_baseUrl}/tts/status", ct);
+            return resp?.Speaking ?? false;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"SttBridge.IsSpeaking error: {ex.Message}");
+            return false;
+        }
+    }
 
     private record ModelsListResponse([property: JsonPropertyName("models")] string[] Models);
     private record DownloadStartResponse(
         [property: JsonPropertyName("ok")]      bool   Ok,
         [property: JsonPropertyName("message")] string Message);
+    private record TtsVoicesResponse([property: JsonPropertyName("voices")] TtsVoiceInfo[] Voices);
+    private record TtsLanguagesResponse([property: JsonPropertyName("languages")] TtsLanguageInfo[] Languages);
+    private record TtsAutoVoiceResponse(
+        [property: JsonPropertyName("ok")] bool Ok,
+        [property: JsonPropertyName("voice")] string Voice);
+    private record TtsDevicesResponse([property: JsonPropertyName("devices")] TtsDeviceInfo[] Devices);
+    private record TtsStatusResponse([property: JsonPropertyName("speaking")] bool Speaking);
+
+    public void Dispose() => _http.Dispose();
 }
+
+public record TtsVoiceInfo(
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("locale")] string Locale,
+    [property: JsonPropertyName("gender")] string Gender,
+    [property: JsonPropertyName("friendly_name")] string FriendlyName);
+
+public record TtsDeviceInfo(
+    [property: JsonPropertyName("id")] int Id,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("channels")] int Channels,
+    [property: JsonPropertyName("samplerate")] int SampleRate,
+    [property: JsonPropertyName("is_default")] bool IsDefault);
+
+public record TtsLanguageInfo(
+    [property: JsonPropertyName("code")] string Code,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("voices")] string[] Voices);

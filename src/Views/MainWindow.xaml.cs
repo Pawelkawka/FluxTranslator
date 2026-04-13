@@ -44,9 +44,11 @@ public partial class MainWindow : Window
         TabAppearance.Initialise(_cfgManager.Config, _cfgManager);
         TabBehavior.Initialise  (_cfgManager.Config, _cfgManager);
         TabHotkeys.Initialise   (_cfgManager.Config, _cfgManager);
+        TabTts.Initialise       (_cfgManager.Config, _cfgManager, _controller);
 
         TabAppearance.ConfigChanged += () => _overlay.UpdateConfig(_cfgManager.Config);
         TabHotkeys.HotkeysChanged   += RegisterHotkeys;
+        TabTts.TtsSettingsChanged   += () => { };
 
         TbVersion.Text = AppSettings.AppVersion;
 
@@ -136,12 +138,13 @@ public partial class MainWindow : Window
     {
         if (sender is not RadioButton rb) return;
 
-        if (TabGeneral is null || TabAppearance is null || TabBehavior is null || TabHotkeys is null) return;
+        if (TabGeneral is null || TabAppearance is null || TabBehavior is null || TabHotkeys is null || TabTts is null) return;
 
         TabGeneral.Visibility    = Visibility.Collapsed;
         TabAppearance.Visibility = Visibility.Collapsed;
         TabBehavior.Visibility   = Visibility.Collapsed;
         TabHotkeys.Visibility    = Visibility.Collapsed;
+        TabTts.Visibility        = Visibility.Collapsed;
 
         UIElement? target = rb.Tag?.ToString() switch
         {
@@ -149,6 +152,7 @@ public partial class MainWindow : Window
             "Appearance" => TabAppearance,
             "Behavior"   => TabBehavior,
             "Hotkeys"    => TabHotkeys,
+            "Tts"        => TabTts,
             _ => null,
         };
 
