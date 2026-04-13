@@ -94,10 +94,6 @@ def _safe_dirname(hf_name: str) -> str:
 # Model loading
 
 def _load(model_path: Path):
-    """Load (or return cached) CTranslate2 translator + tokenizer.
-
-    Only one model is kept in RAM at a time.  Loading a new one evicts the old.
-    """
     key = str(model_path)
     with _cache_lock:
         if key in _cache:
