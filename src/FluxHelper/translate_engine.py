@@ -81,7 +81,6 @@ def _ensure_dir(models_dir: str) -> Path:
 
 
 def _hf_name(source_lang: str, target_lang: str) -> tuple[str, str, str]:
-    """Return (HuggingFace repo id, src_code, tgt_code)."""
     src = source_lang.split("-")[0].lower()
     tgt = target_lang.split("-")[0].lower()
     return f"Helsinki-NLP/opus-mt-{src}-{tgt}", src, tgt

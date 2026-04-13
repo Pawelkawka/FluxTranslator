@@ -246,7 +246,7 @@ public partial class TtsTab : UserControl
     {
         if (ChkTtsEnabled.IsChecked == true)
         {
-            TbTtsStatus.Text = "Voice TTS is enabled - translations will be spoken aloud";
+            TbTtsStatus.Text = "Voice TTS is enabled translations will be spoken aloud";
         }
         else
         {

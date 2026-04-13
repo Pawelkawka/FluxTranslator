@@ -3,6 +3,7 @@ import logging
 import threading
 import tempfile
 import os
+import time
 import wave
 import subprocess
 from typing import Optional
@@ -14,6 +15,18 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 TTS_SAMPLE_RATE = 24000
+
+# fallback voices
+VOICE_FALLBACKS = {
+    "no-NO-FinnNeural": "no-NO-PernilleNeural",
+    "no-NO-PernilleNeural": "no-NO-FinnNeural",
+    "sv-SE-SofieNeural": "sv-SE-MattiasNeural",
+    "sv-SE-MattiasNeural": "sv-SE-SofieNeural",
+    "da-DK-ChristelNeural": "da-DK-JeppeNeural",
+    "da-DK-JeppeNeural": "da-DK-ChristelNeural",
+    "fi-FI-NooraNeural": "fi-FI-HarriNeural",
+    "fi-FI-HarriNeural": "fi-FI-NooraNeural",
+}
 
 # tts languages
 TTS_LANGUAGES = {
@@ -210,14 +223,14 @@ def get_available_languages() -> list[dict]:
 
 def get_voice_for_language(lang_code: str) -> str:
     lang = lang_code.strip().lower()
-    
+
     if lang in TTS_LANGUAGES:
         return TTS_LANGUAGES[lang]["voices"][0]
-    
+
     for code, data in TTS_LANGUAGES.items():
         if code == lang or lang.startswith(code):
             return data["voices"][0]
-    
+
     log.warning("No voice found for language '%s', defaulting to English", lang)
     return TTS_LANGUAGES["en"]["voices"][0]
 
@@ -256,27 +269,27 @@ def _decode_mp3_to_wav(mp3_path: str, wav_path: str) -> tuple[np.ndarray, int]:
             capture_output=True,
             timeout=30
         )
-        
+
         if result.returncode != 0:
             log.error("FFmpeg failed: %s", result.stderr.decode())
             raise RuntimeError(f"FFmpeg failed: {result.stderr.decode()}")
-        
+
         with wave.open(wav_path, 'rb') as wf:
             n_channels = wf.getnchannels()
             sample_width = wf.getsampwidth()
             framerate = wf.getframerate()
             n_frames = wf.getnframes()
-            
+
             assert n_channels == 1, f"Expected mono, got {n_channels} channels"
             assert sample_width == 2, f"Expected 16-bit, got {sample_width * 8}-bit"
             assert framerate == TTS_SAMPLE_RATE, f"Expected {TTS_SAMPLE_RATE}Hz, got {framerate}Hz"
-            
+
             raw_data = wf.readframes(n_frames)
             samples = np.frombuffer(raw_data, dtype=np.int16)
             samples_float = samples.astype(np.float32) / 32768.0
-            
+
             return samples_float, framerate
-            
+
     except FileNotFoundError:
         raise RuntimeError("FFmpeg not found/install ffmpeg.")
 
@@ -299,66 +312,97 @@ def speak_text(
     tmp_mp3 = None
     tmp_wav = None
 
-    try:
-        comm = edge_tts.Communicate(
-            text=text.strip(),
-            voice=voice,
-            rate=rate,
-            volume=volume,
-            pitch=pitch,
-        )
+    # Build list of voices to try: primary + fallback + English
+    voices_to_try = [voice]
+    if voice in VOICE_FALLBACKS:
+        voices_to_try.append(VOICE_FALLBACKS[voice])
+    if "en-US-EmmaMultilingualNeural" not in voices_to_try:
+        voices_to_try.append("en-US-EmmaMultilingualNeural")
 
-        with _playback_lock:
-            _is_speaking = True
+    last_error = None
 
-        log.info("Starting TTS: voice=%s, device_id=%s, text=%r", voice, device_id, text[:50])
-
-        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
-            tmp_mp3 = tmp.name
-        
-        tmp_wav = tmp_mp3.replace('.mp3', '.wav')
-
-        comm.save_sync(tmp_mp3)
-
+    for attempt_voice in voices_to_try:
         if _stop_event.is_set():
-            log.info("TTS cancelled before playback")
-            return
+            break
 
-        samples, sample_rate = _decode_mp3_to_wav(tmp_mp3, tmp_wav)
+        try:
+            with _playback_lock:
+                _is_speaking = True
 
-        if _stop_event.is_set():
-            log.info("TTS cancelled during decoding")
-            return
+            log.info("Starting TTS: voice=%s, device_id=%s, text=%r", attempt_voice, device_id, text[:50])
 
-        if len(samples) == 0:
-            log.warning("No audio generated")
-            return
+            comm = edge_tts.Communicate(
+                text=text.strip(),
+                voice=attempt_voice,
+                rate=rate,
+                volume=volume,
+                pitch=pitch,
+            )
 
-        with sd.OutputStream(
-            device=device_id,
-            samplerate=sample_rate,
-            channels=1,
-            dtype=np.float32,
-        ) as stream:
-            stream.write(samples)
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+                tmp_mp3 = tmp.name
 
-        log.info("TTS playback completed (%.2f seconds)", len(samples) / sample_rate)
+            tmp_wav = tmp_mp3.replace('.mp3', '.wav')
 
-    except Exception as exc:
-        log.error("TTS error: %s", exc, exc_info=True)
-    finally:
-        for tmp_path in [tmp_mp3, tmp_wav]:
-            if tmp_path and os.path.exists(tmp_path):
+            for attempt in range(2):
                 try:
-                    os.unlink(tmp_path)
-                except:
-                    pass
-        
-        with _playback_lock:
-            _is_speaking = False
+                    comm.save_sync(tmp_mp3)
+                    break
+                except Exception as save_exc:
+                    if attempt < 1:
+                        log.warning("TTS save attempt %d failed, retrying: %s", attempt + 1, save_exc)
+                        time.sleep(0.5)
+                    else:
+                        raise
+
+            if _stop_event.is_set():
+                log.info("TTS cancelled before playback")
+                break
+
+            samples, sample_rate = _decode_mp3_to_wav(tmp_mp3, tmp_wav)
+
+            if _stop_event.is_set():
+                log.info("TTS cancelled during decoding")
+                break
+
+            if len(samples) == 0:
+                log.warning("No audio generated")
+                break
+
+            with sd.OutputStream(
+                device=device_id,
+                samplerate=sample_rate,
+                channels=1,
+                dtype=np.float32,
+            ) as stream:
+                stream.write(samples)
+
+            log.info("TTS playback completed (%.2f seconds)", len(samples) / sample_rate)
+            return  # Success!
+
+        except Exception as exc:
+            last_error = exc
+            log.warning("TTS failed with voice %s: %s", attempt_voice, exc)
+
+            for tmp_path in [tmp_mp3, tmp_wav]:
+                if tmp_path and os.path.exists(tmp_path):
+                    try:
+                        os.unlink(tmp_path)
+                    except:
+                        pass
+            tmp_mp3 = None
+            tmp_wav = None
+            continue
+        finally:
+            with _playback_lock:
+                _is_speaking = False
+
+    if last_error:
+        log.error("TTS failed after trying all voices: %s", last_error, exc_info=True)
 
 
 def stop_speaking() -> None:
+    """Stop the current TTS playback."""
     global _is_speaking
 
     _stop_event.set()

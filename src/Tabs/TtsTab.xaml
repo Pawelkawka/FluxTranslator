@@ -57,7 +57,7 @@
 							<TextBlock Text="Output Device"
 									   Foreground="{StaticResource TextPrimaryBrush}"
 									   FontSize="13"/>
-							<TextBlock Text="Select the audio device for TTS playback (e.g., VBCable)"
+							<TextBlock Text="Select the audio device for TTS playback (e.g VBCable)"
 									   Style="{StaticResource SubText}"
 									   TextWrapping="Wrap"
 									   Margin="0,4,0,0"/>
