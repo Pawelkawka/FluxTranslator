@@ -35,7 +35,7 @@ public partial class HotkeysTab : UserControl
         var focusedElement = Keyboard.FocusedElement;
         if (focusedElement is not TextBox focusedTextBox) return;
 
-        string buttonName = e.ChangedButton switch
+        string? buttonName = e.ChangedButton switch
         {
             System.Windows.Input.MouseButton.Left => "LButton",
             System.Windows.Input.MouseButton.Right => "RButton",

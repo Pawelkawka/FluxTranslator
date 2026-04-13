@@ -37,6 +37,7 @@ public static class AppSettings
     public const int    DefaultOverlayDisplayTime    = 15;
     public const double DefaultInitialSilenceTimeout  = 4.0;
     public const double DefaultSilenceTimeout         = 0.2;
+    public const int    DefaultMaxRecordingSeconds    = 120;
 
     public const string DefaultSourceLanguage  = "pl-PL";
     public const string DefaultTargetLanguage  = "en";

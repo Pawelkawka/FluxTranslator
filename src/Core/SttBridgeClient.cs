@@ -35,6 +35,7 @@ public class SttBridgeClient : IDisposable
         string sourceLang,
         double initialSilenceTimeout,
         double silenceTimeout,
+        int maxRecordingSeconds = AppSettings.DefaultMaxRecordingSeconds,
         CancellationToken ct = default)
     {
         var body = new
@@ -42,6 +43,7 @@ public class SttBridgeClient : IDisposable
             language                 = sourceLang,
             initial_silence_timeout  = initialSilenceTimeout,
             silence_timeout          = silenceTimeout,
+            max_recording_seconds    = maxRecordingSeconds,
         };
 
         try

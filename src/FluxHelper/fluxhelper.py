@@ -17,6 +17,9 @@ logging.basicConfig(
 )
 log = logging.getLogger("fluxhelper")
 app = Flask(__name__)
+DEFAULT_MAX_RECORDING_SECONDS = 120
+DEFAULT_INITIAL_SILENCE_TIMEOUT = 4.0
+DEFAULT_SILENCE_TIMEOUT = 0.2
 
 @app.route("/health")
 def health():
@@ -32,7 +35,34 @@ def get_status():
 def start():
     request_body = request.get_json(silent=True) or {}
     language = request_body.get("language", "pl-PL")
-    max_recording_seconds = int(request_body.get("max_recording_seconds", 600))
+    try:
+        requested_max_recording_seconds = int(
+            request_body.get("max_recording_seconds", DEFAULT_MAX_RECORDING_SECONDS)
+        )
+    except (TypeError, ValueError):
+        requested_max_recording_seconds = DEFAULT_MAX_RECORDING_SECONDS
+
+    max_recording_seconds = max(
+        1,
+        min(requested_max_recording_seconds, DEFAULT_MAX_RECORDING_SECONDS),
+    )
+
+    try:
+        requested_initial_silence_timeout = float(
+            request_body.get("initial_silence_timeout", DEFAULT_INITIAL_SILENCE_TIMEOUT)
+        )
+    except (TypeError, ValueError):
+        requested_initial_silence_timeout = DEFAULT_INITIAL_SILENCE_TIMEOUT
+
+    try:
+        requested_silence_timeout = float(
+            request_body.get("silence_timeout", DEFAULT_SILENCE_TIMEOUT)
+        )
+    except (TypeError, ValueError):
+        requested_silence_timeout = DEFAULT_SILENCE_TIMEOUT
+
+    initial_silence_timeout = max(1.0, min(requested_initial_silence_timeout, 30.0))
+    silence_timeout = max(0.05, min(requested_silence_timeout, 5.0))
 
     state.request_stop()
     time.sleep(0.05)
@@ -42,7 +72,13 @@ def start():
     state.update_status("starting", "Starting recording...")
     threading.Thread(
         target=stt_engine.worker,
-        args=(session_id, language, max_recording_seconds),
+        args=(
+            session_id,
+            language,
+            max_recording_seconds,
+            initial_silence_timeout,
+            silence_timeout,
+        ),
         daemon=True,
     ).start()
     return jsonify({"ok": True, "session_id": session_id})
@@ -157,14 +193,10 @@ def speak():
         return jsonify({"ok": False, "error": "No text provided."}), 400
     
     try:
-        threading.Thread(
-            target=tts_engine.speak_text,
-            args=(text, voice, device_id, rate, volume, pitch),
-            daemon=True,
-        ).start()
+        tts_engine.start_speaking(text, voice, device_id, rate, volume, pitch)
         
-        log.info("TTS started: voice=%s, text=%r", voice, text[:50])
-        return jsonify({"ok": True, "message": "TTS started"})
+        log.info("TTS queued: voice=%s, text=%r", voice, text[:50])
+        return jsonify({"ok": True, "message": "TTS queued"})
     except Exception as exc:
         log.error("Error starting TTS: %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
@@ -190,6 +222,13 @@ def tts_status():
         return jsonify({"ok": False, "error": str(exc)}), 500
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 5001
+    try:
+        port = int(sys.argv[1]) if len(sys.argv) > 1 else 5001
+    except ValueError as exc:
+        raise SystemExit("Port must be an integer.") from exc
+
+    if not 1 <= port <= 65535:
+        raise SystemExit("Port must be between 1 and 65535.")
+
     log.info("FluxHelper server starting on port %d", port)
     app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False)

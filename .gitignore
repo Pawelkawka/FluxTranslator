@@ -14,3 +14,4 @@ log.txt
 .vs/
 *.user
 *.suo
+.vscode/

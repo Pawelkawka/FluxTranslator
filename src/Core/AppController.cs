@@ -161,7 +161,8 @@ public class AppController : IDisposable
         bool ok = await _sttBridgeClient.StartAsync(
             config.SourceLanguage,
             config.InitialSilenceTimeout,
-            config.SilenceTimeout);
+            config.SilenceTimeout,
+            AppSettings.DefaultMaxRecordingSeconds);
 
         if (!ok)
         {
@@ -208,7 +209,11 @@ public class AppController : IDisposable
 
     private async Task PollLoopAsync(CancellationToken ct)
     {
-        const int maxWaitMs = 90_000;
+        var maxWaitMs = (int)TimeSpan.FromSeconds(
+            AppSettings.DefaultMaxRecordingSeconds
+            + _configManager.Config.InitialSilenceTimeout
+            + 20.0
+        ).TotalMilliseconds;
         var deadline = DateTime.UtcNow.AddMilliseconds(maxWaitMs);
 
         while (!ct.IsCancellationRequested && DateTime.UtcNow < deadline)
@@ -246,6 +251,13 @@ public class AppController : IDisposable
             catch (Exception ex) { AppLogger.Error($"Poll loop error: {ex.Message}"); }
 
             await Task.Delay(200, ct);
+        }
+
+        if (!ct.IsCancellationRequested && DateTime.UtcNow >= deadline)
+        {
+            AppLogger.Warn("STT polling timed out; stopping active recording.");
+            await _sttBridgeClient.StopAsync();
+            Emit("Recording timed out.", true, true);
         }
 
         _isListening = false;

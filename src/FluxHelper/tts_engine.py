@@ -3,6 +3,7 @@ import logging
 import threading
 import tempfile
 import os
+import shutil
 import time
 import wave
 import subprocess
@@ -189,8 +190,11 @@ TTS_LANGUAGES = {
 }
 
 _playback_lock = threading.Lock()
+_request_condition = threading.Condition()
 _is_speaking = False
-_stop_event = threading.Event()
+_current_stop_event: Optional[threading.Event] = None
+_worker_thread: Optional[threading.Thread] = None
+_pending_request: Optional[tuple[str, str, Optional[int], str, str, str]] = None
 
 
 def list_voices_sync() -> list[dict]:
@@ -294,23 +298,51 @@ def _decode_mp3_to_wav(mp3_path: str, wav_path: str) -> tuple[np.ndarray, int]:
         raise RuntimeError("FFmpeg not found/install ffmpeg.")
 
 
-def speak_text(
+def _validate_speak_request(device_id: Optional[int]) -> None:
+    if shutil.which("ffmpeg") is None:
+        raise RuntimeError("FFmpeg not found/install ffmpeg.")
+
+    if device_id is None:
+        return
+
+    try:
+        device = sd.query_devices(device_id, "output")
+    except Exception as exc:
+        raise RuntimeError(f"Invalid output device: {device_id}") from exc
+
+    if device["max_output_channels"] <= 0:
+        raise RuntimeError(f"Device {device_id} does not support audio output.")
+
+
+def _write_samples(
+    stream: sd.OutputStream,
+    samples: np.ndarray,
+    stop_event: threading.Event,
+    sample_rate: int,
+) -> bool:
+    chunk_frames = max(sample_rate // 10, 1)
+    for start in range(0, len(samples), chunk_frames):
+        if stop_event.is_set():
+            return False
+        end = start + chunk_frames
+        stream.write(samples[start:end])
+    return not stop_event.is_set()
+
+
+def _speak_text(
     text: str,
     voice: str,
     device_id: Optional[int] = None,
     rate: str = "+0%",
     volume: str = "+0%",
     pitch: str = "+0Hz",
+    stop_event: Optional[threading.Event] = None,
 ) -> None:
-    global _is_speaking
-
     if not text or not text.strip():
         log.warning("No text provided for TTS")
         return
 
-    _stop_event.clear()
-    tmp_mp3 = None
-    tmp_wav = None
+    stop_event = stop_event or threading.Event()
 
     voices_to_try = [voice]
     if voice in VOICE_FALLBACKS:
@@ -321,13 +353,12 @@ def speak_text(
     last_error = None
 
     for attempt_voice in voices_to_try:
-        if _stop_event.is_set():
+        if stop_event.is_set():
             break
 
+        tmp_mp3 = None
+        tmp_wav = None
         try:
-            with _playback_lock:
-                _is_speaking = True
-
             log.info("Starting TTS: voice=%s, device_id=%s, text=%r", attempt_voice, device_id, text[:50])
 
             comm = edge_tts.Communicate(
@@ -354,13 +385,13 @@ def speak_text(
                     else:
                         raise
 
-            if _stop_event.is_set():
+            if stop_event.is_set():
                 log.info("TTS cancelled before playback")
                 break
 
             samples, sample_rate = _decode_mp3_to_wav(tmp_mp3, tmp_wav)
 
-            if _stop_event.is_set():
+            if stop_event.is_set():
                 log.info("TTS cancelled during decoding")
                 break
 
@@ -374,7 +405,9 @@ def speak_text(
                 channels=1,
                 dtype=np.float32,
             ) as stream:
-                stream.write(samples)
+                if not _write_samples(stream, samples, stop_event, sample_rate):
+                    log.info("TTS playback stopped before completion")
+                    break
 
             log.info("TTS playback completed (%.2f seconds)", len(samples) / sample_rate)
             return
@@ -382,35 +415,93 @@ def speak_text(
         except Exception as exc:
             last_error = exc
             log.warning("TTS failed with voice %s: %s", attempt_voice, exc)
-
-            for tmp_path in [tmp_mp3, tmp_wav]:
+            continue
+        finally:
+            for tmp_path in (tmp_mp3, tmp_wav):
                 if tmp_path and os.path.exists(tmp_path):
                     try:
                         os.unlink(tmp_path)
-                    except:
+                    except OSError:
                         pass
-            tmp_mp3 = None
-            tmp_wav = None
-            continue
-        finally:
-            with _playback_lock:
-                _is_speaking = False
 
     if last_error:
         log.error("TTS failed after trying all voices: %s", last_error, exc_info=True)
 
 
-def stop_speaking() -> None:
-    global _is_speaking
+def _tts_worker() -> None:
+    global _worker_thread, _pending_request, _current_stop_event, _is_speaking
 
-    _stop_event.set()
+    while True:
+        with _request_condition:
+            while _pending_request is None:
+                notified = _request_condition.wait(timeout=30)
+                if _pending_request is None and not notified:
+                    _worker_thread = None
+                    return
+
+            request = _pending_request
+            _pending_request = None
+
+        stop_event = threading.Event()
+        with _playback_lock:
+            _current_stop_event = stop_event
+            _is_speaking = True
+
+        try:
+            _speak_text(*request, stop_event=stop_event)
+        finally:
+            with _playback_lock:
+                if _current_stop_event is stop_event:
+                    _current_stop_event = None
+                _is_speaking = False
+
+
+def start_speaking(
+    text: str,
+    voice: str,
+    device_id: Optional[int] = None,
+    rate: str = "+0%",
+    volume: str = "+0%",
+    pitch: str = "+0Hz",
+) -> None:
+    global _worker_thread, _pending_request
+
+    _validate_speak_request(device_id)
+
+    request = (text, voice, device_id, rate, volume, pitch)
+
+    with _request_condition:
+        with _playback_lock:
+            if _current_stop_event is not None:
+                _current_stop_event.set()
+
+        _pending_request = request
+
+        if _worker_thread is None or not _worker_thread.is_alive():
+            _worker_thread = threading.Thread(target=_tts_worker, name="tts-worker", daemon=True)
+            _worker_thread.start()
+
+        _request_condition.notify()
+
+
+def stop_speaking() -> None:
+    global _pending_request
+
+    with _request_condition:
+        _pending_request = None
+        _request_condition.notify_all()
 
     with _playback_lock:
+        if _current_stop_event is not None:
+            _current_stop_event.set()
         if _is_speaking:
             log.info("Stopping TTS playback")
             _is_speaking = False
 
 
 def is_currently_speaking() -> bool:
+    with _request_condition:
+        has_pending_request = _pending_request is not None
+
     with _playback_lock:
-        return _is_speaking
+        return _is_speaking or has_pending_request
