@@ -128,7 +128,5 @@ public class TranslationService : IDisposable
         return dash >= 0 ? code[..dash].ToLowerInvariant() : code.ToLowerInvariant();
     }
 
-    public static string NormaliseLangCode(string code) => NormalizeLangCode(code);
-
     public void Dispose() => _http.Dispose();
 }

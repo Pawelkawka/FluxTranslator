@@ -10,17 +10,21 @@ import state
 
 log = logging.getLogger("stt_engine")
 
-#audio constants
-SAMPLE_RATE  = 16_000
-CHANNELS     = 1
+# ── Audio constants ─────────────────────────────────────────────────
+
+SAMPLE_RATE = 16_000
+CHANNELS = 1
 SAMPLE_WIDTH = 2
-CHUNK_SECS   = 0.1
+CHUNK_SECS = 0.1
 SPEECH_RMS_FLOOR = 300.0
 SPEECH_RMS_MULTIPLIER = 3.0
 
 
 class SpeechTimeoutError(RuntimeError):
     pass
+
+
+# ── Audio helpers ───────────────────────────────────────────────────
 
 
 
@@ -43,7 +47,6 @@ def _record(duration: float, stop: threading.Event) -> bytes:
 def _pcm_rms(pcm: bytes) -> float:
     if not pcm:
         return 0.0
-
     samples = np.frombuffer(pcm, dtype=np.int16).astype(np.float32)
     if samples.size == 0:
         return 0.0
@@ -56,6 +59,9 @@ def _chunk_rms(chunk: np.ndarray) -> float:
 
     mono = chunk.astype(np.float32)
     return float(np.sqrt(np.mean(np.square(mono))))
+
+
+# ── Recording with voice activity detection ────────────────────────
 
 
 def _record_phrase(
@@ -120,7 +126,8 @@ def _to_audio_data(pcm: bytes) -> sr.AudioData:
     return sr.AudioData(pcm, SAMPLE_RATE, SAMPLE_WIDTH)
 
 
-#1worker
+# ── STT worker ──────────────────────────────────────────────────────
+
 
 def worker(
     session_id: int,
@@ -170,7 +177,7 @@ def worker(
     if not pcm or session_id != state.get_active_session_id():
         return
 
-    #2sppech recognition
+    # Speech recognition
     try:
         state.update_status("processing", "Recognising speech…")
         audio = _to_audio_data(pcm)

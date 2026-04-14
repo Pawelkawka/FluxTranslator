@@ -1,27 +1,31 @@
 import asyncio
 import logging
-import threading
-import tempfile
 import os
 import shutil
+import subprocess
+import tempfile
+import threading
 import time
 import wave
-import subprocess
 from typing import Optional
 
 import edge_tts
-import sounddevice as sd
 import numpy as np
+import sounddevice as sd
+
+from tts_voices import DEFAULT_VOICE, TTS_LANGUAGES, VOICE_FALLBACKS
 
 log = logging.getLogger(__name__)
 
 TTS_SAMPLE_RATE = 24000
 
 
+# ── Device resolution ───────────────────────────────────────────────
+
+
 def _resolve_device_id(device_id) -> Optional[int]:
     if device_id is None:
         return None
-
     if isinstance(device_id, int):
         return device_id
 
@@ -33,8 +37,7 @@ def _resolve_device_id(device_id) -> Optional[int]:
 
         target = device_id.strip()
         try:
-            devices = sd.query_devices()
-            for idx, dev in enumerate(devices):
+            for idx, dev in enumerate(sd.query_devices()):
                 dev_name = dev.get("name", "")
                 if target in dev_name or dev_name in target:
                     return idx
@@ -42,270 +45,8 @@ def _resolve_device_id(device_id) -> Optional[int]:
             log.warning("Failed to query devices for ID resolution: %s", exc)
 
         log.warning("Could not resolve device ID '%s' to an integer index", device_id)
-        return None
 
     return None
-
-# fallback voices
-VOICE_FALLBACKS = {
-    "no-NO-FinnNeural": "no-NO-PernilleNeural",
-    "no-NO-PernilleNeural": "no-NO-FinnNeural",
-    "sv-SE-SofieNeural": "sv-SE-MattiasNeural",
-    "sv-SE-MattiasNeural": "sv-SE-SofieNeural",
-    "da-DK-ChristelNeural": "da-DK-JeppeNeural",
-    "da-DK-JeppeNeural": "da-DK-ChristelNeural",
-    "fi-FI-NooraNeural": "fi-FI-HarriNeural",
-    "fi-FI-HarriNeural": "fi-FI-NooraNeural",
-}
-
-# tts languages
-TTS_LANGUAGES = {
-    "en": {
-        "name": "English",
-        "voices": [
-            "en-US-EmmaMultilingualNeural",
-            "en-US-AvaMultilingualNeural",
-            "en-US-AndrewMultilingualNeural",
-            "en-US-BrianMultilingualNeural",
-            "en-US-JennyNeural",
-            "en-US-GuyNeural",
-            "en-GB-SoniaNeural",
-            "en-GB-RyanNeural",
-        ],
-    },
-    "pl": {
-        "name": "Polish",
-        "voices": [
-            "pl-PL-ZofiaNeural",
-            "pl-PL-MarekNeural",
-        ],
-    },
-    "de": {
-        "name": "German",
-        "voices": [
-            "de-DE-KatjaNeural",
-            "de-DE-ConradNeural",
-            "de-DE-AmalaNeural",
-            "de-DE-BerndNeural",
-        ],
-    },
-    "ru": {
-        "name": "Russian",
-        "voices": [
-            "ru-RU-SvetlanaNeural",
-            "ru-RU-DmitryNeural",
-        ],
-    },
-    "fr": {
-        "name": "French",
-        "voices": [
-            "fr-FR-DeniseNeural",
-            "fr-FR-HenriNeural",
-            "fr-FR-EloiseNeural",
-        ],
-    },
-    "it": {
-        "name": "Italian",
-        "voices": [
-            "it-IT-ElsaNeural",
-            "it-IT-DiegoNeural",
-            "it-IT-IsabellaNeural",
-        ],
-    },
-    "es": {
-        "name": "Spanish",
-        "voices": [
-            "es-ES-ElviraNeural",
-            "es-ES-AlvaroNeural",
-            "es-ES-AbrilNeural",
-        ],
-    },
-    "cs": {
-        "name": "Czech",
-        "voices": [
-            "cs-CZ-VlastaNeural",
-            "cs-CZ-AntoninNeural",
-        ],
-    },
-    "uk": {
-        "name": "Ukrainian",
-        "voices": [
-            "uk-UA-PolinaNeural",
-            "uk-UA-OstapNeural",
-        ],
-    },
-    "zh": {
-        "name": "Chinese",
-        "voices": [
-            "zh-CN-XiaoxiaoNeural",
-            "zh-CN-YunxiNeural",
-            "zh-CN-YunjianNeural",
-            "zh-CN-XiaoyiNeural",
-        ],
-    },
-    "ja": {
-        "name": "Japanese",
-        "voices": [
-            "ja-JP-NanamiNeural",
-            "ja-JP-KeitaNeural",
-        ],
-    },
-    "ko": {
-        "name": "Korean",
-        "voices": [
-            "ko-KR-SunHiNeural",
-            "ko-KR-InJoonNeural",
-        ],
-    },
-    "pt": {
-        "name": "Portuguese",
-        "voices": [
-            "pt-PT-RaquelNeural",
-            "pt-PT-DuarteNeural",
-            "pt-BR-FranciscaNeural",
-            "pt-BR-AntonioNeural",
-        ],
-    },
-    "nl": {
-        "name": "Dutch",
-        "voices": [
-            "nl-NL-ColetteNeural",
-            "nl-NL-FennaNeural",
-            "nl-NL-MaartenNeural",
-        ],
-    },
-    "sv": {
-        "name": "Swedish",
-        "voices": [
-            "sv-SE-SofieNeural",
-            "sv-SE-MattiasNeural",
-        ],
-    },
-    "fi": {
-        "name": "Finnish",
-        "voices": [
-            "fi-FI-NooraNeural",
-            "fi-FI-HarriNeural",
-        ],
-    },
-    "da": {
-        "name": "Danish",
-        "voices": [
-            "da-DK-ChristelNeural",
-            "da-DK-JeppeNeural",
-        ],
-    },
-    "no": {
-        "name": "Norwegian",
-        "voices": [
-            "no-NO-PernilleNeural",
-            "no-NO-FinnNeural",
-        ],
-    },
-    "tr": {
-        "name": "Turkish",
-        "voices": [
-            "tr-TR-EmelNeural",
-            "tr-TR-AhmetNeural",
-        ],
-    },
-    "ar": {
-        "name": "Arabic",
-        "voices": [
-            "ar-SA-ZariyahNeural",
-            "ar-SA-HamedNeural",
-        ],
-    },
-}
-
-_playback_lock = threading.Lock()
-_request_condition = threading.Condition()
-_is_speaking = False
-_current_stop_event: Optional[threading.Event] = None
-_worker_thread: Optional[threading.Thread] = None
-_pending_request: Optional[tuple[str, str, Optional[int], str, str, str]] = None
-
-
-def list_voices_sync() -> list[dict]:
-    try:
-        voices = asyncio.run(edge_tts.list_voices())
-        result = []
-        for v in voices:
-            result.append({
-                "name": v["ShortName"],
-                "locale": v["Locale"],
-                "gender": v["Gender"],
-                "friendly_name": v.get("FriendlyName", v["ShortName"]),
-            })
-        return result
-    except Exception as exc:
-        log.error("Error listing voices: %s", exc)
-        return []
-
-
-def get_available_languages() -> list[dict]:
-    result = []
-    for lang_code, lang_data in TTS_LANGUAGES.items():
-        result.append({
-            "code": lang_code,
-            "name": lang_data["name"],
-            "voices": lang_data["voices"],
-        })
-    return result
-
-
-def get_voice_for_language(lang_code: str) -> str:
-    lang = lang_code.strip().lower()
-
-    if lang in TTS_LANGUAGES:
-        return TTS_LANGUAGES[lang]["voices"][0]
-
-    for code, data in TTS_LANGUAGES.items():
-        if code == lang or lang.startswith(code):
-            return data["voices"][0]
-
-    log.warning("No voice found for language '%s', defaulting to English", lang)
-    return TTS_LANGUAGES["en"]["voices"][0]
-
-
-def _decode_mp3_to_wav(mp3_path: str, wav_path: str) -> tuple[np.ndarray, int]:
-    try:
-        result = subprocess.run(
-            [
-                'ffmpeg',
-                '-i', mp3_path,
-                '-ar', str(TTS_SAMPLE_RATE),
-                '-ac', '1',
-                '-sample_fmt', 's16',
-                '-y',
-                wav_path
-            ],
-            capture_output=True,
-            timeout=30
-        )
-
-        if result.returncode != 0:
-            log.error("FFmpeg failed: %s", result.stderr.decode())
-            raise RuntimeError(f"FFmpeg failed: {result.stderr.decode()}")
-
-        with wave.open(wav_path, 'rb') as wf:
-            n_channels = wf.getnchannels()
-            sample_width = wf.getsampwidth()
-            framerate = wf.getframerate()
-            n_frames = wf.getnframes()
-
-            assert n_channels == 1, f"Expected mono, got {n_channels} channels"
-            assert sample_width == 2, f"Expected 16-bit, got {sample_width * 8}-bit"
-            assert framerate == TTS_SAMPLE_RATE, f"Expected {TTS_SAMPLE_RATE}Hz, got {framerate}Hz"
-
-            raw_data = wf.readframes(n_frames)
-            samples = np.frombuffer(raw_data, dtype=np.int16)
-            samples_float = samples.astype(np.float32) / 32768.0
-
-            return samples_float, framerate
-
-    except FileNotFoundError:
-        raise RuntimeError("FFmpeg not found. Please install FFmpeg.")
 
 
 def _validate_speak_request(device_id) -> None:
@@ -325,6 +66,103 @@ def _validate_speak_request(device_id) -> None:
         raise RuntimeError(f"Device {device_id} does not support audio output.")
 
 
+# ── Voice / language queries ────────────────────────────────────────
+
+
+def list_voices_sync() -> list[dict]:
+    try:
+        voices = asyncio.run(edge_tts.list_voices())
+        return [
+            {
+                "name": v["ShortName"],
+                "locale": v["Locale"],
+                "gender": v["Gender"],
+                "friendly_name": v.get("FriendlyName", v["ShortName"]),
+            }
+            for v in voices
+        ]
+    except Exception as exc:
+        log.error("Error listing voices: %s", exc)
+        return []
+
+
+def get_available_languages() -> list[dict]:
+    return [
+        {"code": code, "name": data["name"], "voices": data["voices"]}
+        for code, data in TTS_LANGUAGES.items()
+    ]
+
+
+def get_voice_for_language(lang_code: str) -> str:
+    lang = lang_code.strip().lower()
+
+    if lang in TTS_LANGUAGES:
+        return TTS_LANGUAGES[lang]["voices"][0]
+
+    for code, data in TTS_LANGUAGES.items():
+        if lang.startswith(code):
+            return data["voices"][0]
+
+    log.warning("No voice found for language '%s', defaulting to English", lang)
+    return TTS_LANGUAGES["en"]["voices"][0]
+
+
+def list_output_devices() -> list[dict]:
+    devices = []
+    try:
+        dev_list = sd.query_devices()
+        default_output = sd.default.device[1]
+        for idx, dev in enumerate(dev_list):
+            if dev.get("max_output_channels", 0) > 0:
+                devices.append({
+                    "index": idx,
+                    "name": dev.get("name", ""),
+                    "channels": dev.get("max_output_channels"),
+                    "sample_rate": dev.get("default_samplerate"),
+                    "is_default": idx == default_output if default_output is not None else False,
+                })
+    except Exception as exc:
+        log.error("Error listing output devices: %s", exc)
+    return devices
+
+
+# ── Audio conversion & playback ─────────────────────────────────────
+
+
+def _decode_mp3_to_wav(mp3_path: str, wav_path: str) -> tuple[np.ndarray, int]:
+    try:
+        result = subprocess.run(
+            [
+                "ffmpeg",
+                "-i", mp3_path,
+                "-ar", str(TTS_SAMPLE_RATE),
+                "-ac", "1",
+                "-sample_fmt", "s16",
+                "-y",
+                wav_path,
+            ],
+            capture_output=True,
+            timeout=30,
+        )
+
+        if result.returncode != 0:
+            stderr = result.stderr.decode()
+            log.error("FFmpeg failed: %s", stderr)
+            raise RuntimeError(f"FFmpeg failed: {stderr}")
+
+        with wave.open(wav_path, "rb") as wf:
+            assert wf.getnchannels() == 1, f"Expected mono, got {wf.getnchannels()} channels"
+            assert wf.getsampwidth() == 2, f"Expected 16-bit, got {wf.getsampwidth() * 8}-bit"
+            assert wf.getframerate() == TTS_SAMPLE_RATE, f"Expected {TTS_SAMPLE_RATE}Hz, got {wf.getframerate()}Hz"
+
+            raw_data = wf.readframes(wf.getnframes())
+            samples = np.frombuffer(raw_data, dtype=np.int16).astype(np.float32) / 32768.0
+            return samples, wf.getframerate()
+
+    except FileNotFoundError:
+        raise RuntimeError("FFmpeg not found. Please install FFmpeg.")
+
+
 def _write_samples(
     stream: sd.OutputStream,
     samples: np.ndarray,
@@ -335,9 +173,87 @@ def _write_samples(
     for start in range(0, len(samples), chunk_frames):
         if stop_event.is_set():
             return False
-        end = start + chunk_frames
-        stream.write(samples[start:end])
+        stream.write(samples[start : start + chunk_frames])
     return not stop_event.is_set()
+
+
+def _cleanup_temp_files(*paths: Optional[str]) -> None:
+    for path in paths:
+        if path and os.path.exists(path):
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+
+
+# ── Core TTS synthesis ──────────────────────────────────────────────
+
+
+def _build_voice_candidates(voice: str) -> list[str]:
+    candidates = [voice]
+    if voice in VOICE_FALLBACKS:
+        candidates.append(VOICE_FALLBACKS[voice])
+    if DEFAULT_VOICE not in candidates:
+        candidates.append(DEFAULT_VOICE)
+    return candidates
+
+
+def _synthesize_and_play(
+    text: str,
+    voice: str,
+    resolved_device_id: Optional[int],
+    rate: str,
+    volume: str,
+    pitch: str,
+    stop_event: threading.Event,
+) -> None:
+    log.info(
+        "Starting TTS: voice=%s, device_id=%s, text=%r",
+        voice, resolved_device_id, text[:50],
+    )
+
+    comm = edge_tts.Communicate(
+        text=text.strip(), voice=voice,
+        rate=rate, volume=volume, pitch=pitch,
+    )
+
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+        tmp_mp3 = tmp.name
+    tmp_wav = tmp_mp3.replace(".mp3", ".wav")
+
+    try:
+        for attempt in range(2):
+            try:
+                comm.save_sync(tmp_mp3)
+                break
+            except Exception as exc:
+                if attempt == 0:
+                    log.warning("TTS save attempt 1 failed, retrying: %s", exc)
+                    time.sleep(0.5)
+                else:
+                    raise
+
+        if stop_event.is_set():
+            log.info("TTS cancelled before playback")
+            return
+
+        samples, sample_rate = _decode_mp3_to_wav(tmp_mp3, tmp_wav)
+        if stop_event.is_set() or len(samples) == 0:
+            return
+
+        with sd.OutputStream(
+            device=resolved_device_id,
+            samplerate=sample_rate,
+            channels=1,
+            dtype=np.float32,
+        ) as stream:
+            if not _write_samples(stream, samples, stop_event, sample_rate):
+                log.info("TTS playback stopped before completion")
+                return
+
+        log.info("TTS playback completed (%.2f seconds)", len(samples) / sample_rate)
+    finally:
+        _cleanup_temp_files(tmp_mp3, tmp_wav)
 
 
 def _speak_text(
@@ -355,90 +271,33 @@ def _speak_text(
 
     stop_event = stop_event or threading.Event()
     resolved_device_id = _resolve_device_id(device_id)
-
-    voices_to_try = [voice]
-    if voice in VOICE_FALLBACKS:
-        voices_to_try.append(VOICE_FALLBACKS[voice])
-    if "en-US-EmmaMultilingualNeural" not in voices_to_try:
-        voices_to_try.append("en-US-EmmaMultilingualNeural")
-
     last_error = None
 
-    for attempt_voice in voices_to_try:
+    for attempt_voice in _build_voice_candidates(voice):
         if stop_event.is_set():
             break
-
-        tmp_mp3 = None
-        tmp_wav = None
         try:
-            log.info("Starting TTS: voice=%s, device_id=%s (resolved=%s), text=%r", 
-                     attempt_voice, device_id, resolved_device_id, text[:50])
-
-            comm = edge_tts.Communicate(
-                text=text.strip(),
-                voice=attempt_voice,
-                rate=rate,
-                volume=volume,
-                pitch=pitch,
+            _synthesize_and_play(
+                text, attempt_voice, resolved_device_id,
+                rate, volume, pitch, stop_event,
             )
-
-            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
-                tmp_mp3 = tmp.name
-
-            tmp_wav = tmp_mp3.replace('.mp3', '.wav')
-
-            for attempt in range(2):
-                try:
-                    comm.save_sync(tmp_mp3)
-                    break
-                except Exception as save_exc:
-                    if attempt < 1:
-                        log.warning("TTS save attempt %d failed, retrying: %s", attempt + 1, save_exc)
-                        time.sleep(0.5)
-                    else:
-                        raise
-
-            if stop_event.is_set():
-                log.info("TTS cancelled before playback")
-                break
-
-            samples, sample_rate = _decode_mp3_to_wav(tmp_mp3, tmp_wav)
-
-            if stop_event.is_set():
-                log.info("TTS cancelled during decoding")
-                break
-
-            if len(samples) == 0:
-                log.warning("No audio generated")
-                break
-
-            with sd.OutputStream(
-                device=resolved_device_id,
-                samplerate=sample_rate,
-                channels=1,
-                dtype=np.float32,
-            ) as stream:
-                if not _write_samples(stream, samples, stop_event, sample_rate):
-                    log.info("TTS playback stopped before completion")
-                    break
-
-            log.info("TTS playback completed (%.2f seconds)", len(samples) / sample_rate)
             return
-
         except Exception as exc:
             last_error = exc
             log.warning("TTS failed with voice %s: %s", attempt_voice, exc)
-            continue
-        finally:
-            for tmp_path in (tmp_mp3, tmp_wav):
-                if tmp_path and os.path.exists(tmp_path):
-                    try:
-                        os.unlink(tmp_path)
-                    except OSError:
-                        pass
 
     if last_error:
         log.error("TTS failed after trying all voices: %s", last_error, exc_info=True)
+
+
+# ── Worker thread management ────────────────────────────────────────
+
+_playback_lock = threading.Lock()
+_request_condition = threading.Condition()
+_is_speaking = False
+_current_stop_event: Optional[threading.Event] = None
+_worker_thread: Optional[threading.Thread] = None
+_pending_request: Optional[tuple[str, str, Optional[int], str, str, str]] = None
 
 
 def _tts_worker() -> None:
@@ -452,7 +311,7 @@ def _tts_worker() -> None:
                     _worker_thread = None
                     return
 
-            request = _pending_request
+            current_request = _pending_request
             _pending_request = None
 
         stop_event = threading.Event()
@@ -461,12 +320,15 @@ def _tts_worker() -> None:
             _is_speaking = True
 
         try:
-            _speak_text(*request, stop_event=stop_event)
+            _speak_text(*current_request, stop_event=stop_event)
         finally:
             with _playback_lock:
                 if _current_stop_event is stop_event:
                     _current_stop_event = None
                 _is_speaking = False
+
+
+# ── Public API ──────────────────────────────────────────────────────
 
 
 def start_speaking(
@@ -480,7 +342,6 @@ def start_speaking(
     global _worker_thread, _pending_request
 
     _validate_speak_request(device_id)
-
     request = (text, voice, device_id, rate, volume, pitch)
 
     with _request_condition:
@@ -512,28 +373,8 @@ def stop_speaking() -> None:
             _is_speaking = False
 
 
-def list_output_devices() -> list[dict]:
-    """List available audio output devices with their indices and names."""
-    devices = []
-    try:
-        dev_list = sd.query_devices()
-        for idx, dev in enumerate(dev_list):
-            if dev.get("max_output_channels", 0) > 0:
-                devices.append({
-                    "index": idx,
-                    "name": dev.get("name", ""),
-                    "channels": dev.get("max_output_channels"),
-                    "sample_rate": dev.get("default_samplerate"),
-                    "is_default": idx == sd.default.device[1] if sd.default.device[1] is not None else False,
-                })
-    except Exception as exc:
-        log.error("Error listing output devices: %s", exc)
-    return devices
-
-
 def is_currently_speaking() -> bool:
     with _request_condition:
-        has_pending_request = _pending_request is not None
-
+        has_pending = _pending_request is not None
     with _playback_lock:
-        return _is_speaking or has_pending_request
+        return _is_speaking or has_pending

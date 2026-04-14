@@ -17,9 +17,43 @@ logging.basicConfig(
 )
 log = logging.getLogger("fluxhelper")
 app = Flask(__name__)
+
 DEFAULT_MAX_RECORDING_SECONDS = 120
 DEFAULT_INITIAL_SILENCE_TIMEOUT = 4.0
 DEFAULT_SILENCE_TIMEOUT = 0.2
+
+_TRUTHY_STRINGS = {"1", "true", "yes", "on"}
+_FALSY_STRINGS = {"0", "false", "no", "off"}
+
+
+def _parse_bool(value, *, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in _TRUTHY_STRINGS:
+            return True
+        if normalized in _FALSY_STRINGS:
+            return False
+        return default
+    return bool(value)
+
+
+def _parse_clamped_int(value, *, default: int, lo: int, hi: int) -> int:
+    try:
+        return max(lo, min(int(value), hi))
+    except (TypeError, ValueError):
+        return default
+
+
+def _parse_clamped_float(value, *, default: float, lo: float, hi: float) -> float:
+    try:
+        return max(lo, min(float(value), hi))
+    except (TypeError, ValueError):
+        return default
+
+
+# ── STT routes ──────────────────────────────────────────────────────
 
 @app.route("/health")
 def health():
@@ -33,42 +67,22 @@ def get_status():
 
 @app.route("/start", methods=["POST"])
 def start():
-    request_body = request.get_json(silent=True) or {}
-    language = request_body.get("language", "pl-PL")
-    manual_mode_value = request_body.get("manual_mode", True)
-    if isinstance(manual_mode_value, str):
-        manual_mode = manual_mode_value.strip().lower() not in {"0", "false", "no", "off"}
-    else:
-        manual_mode = bool(manual_mode_value)
+    body = request.get_json(silent=True) or {}
 
-    try:
-        requested_max_recording_seconds = int(
-            request_body.get("max_recording_seconds", DEFAULT_MAX_RECORDING_SECONDS)
-        )
-    except (TypeError, ValueError):
-        requested_max_recording_seconds = DEFAULT_MAX_RECORDING_SECONDS
-
-    max_recording_seconds = max(
-        1,
-        min(requested_max_recording_seconds, DEFAULT_MAX_RECORDING_SECONDS),
+    language = body.get("language", "pl-PL")
+    manual_mode = _parse_bool(body.get("manual_mode", True), default=True)
+    max_recording_seconds = _parse_clamped_int(
+        body.get("max_recording_seconds", DEFAULT_MAX_RECORDING_SECONDS),
+        default=DEFAULT_MAX_RECORDING_SECONDS, lo=1, hi=DEFAULT_MAX_RECORDING_SECONDS,
     )
-
-    try:
-        requested_initial_silence_timeout = float(
-            request_body.get("initial_silence_timeout", DEFAULT_INITIAL_SILENCE_TIMEOUT)
-        )
-    except (TypeError, ValueError):
-        requested_initial_silence_timeout = DEFAULT_INITIAL_SILENCE_TIMEOUT
-
-    try:
-        requested_silence_timeout = float(
-            request_body.get("silence_timeout", DEFAULT_SILENCE_TIMEOUT)
-        )
-    except (TypeError, ValueError):
-        requested_silence_timeout = DEFAULT_SILENCE_TIMEOUT
-
-    initial_silence_timeout = max(1.0, min(requested_initial_silence_timeout, 30.0))
-    silence_timeout = max(0.05, min(requested_silence_timeout, 5.0))
+    initial_silence_timeout = _parse_clamped_float(
+        body.get("initial_silence_timeout", DEFAULT_INITIAL_SILENCE_TIMEOUT),
+        default=DEFAULT_INITIAL_SILENCE_TIMEOUT, lo=1.0, hi=30.0,
+    )
+    silence_timeout = _parse_clamped_float(
+        body.get("silence_timeout", DEFAULT_SILENCE_TIMEOUT),
+        default=DEFAULT_SILENCE_TIMEOUT, lo=0.05, hi=5.0,
+    )
 
     state.request_stop()
     time.sleep(0.05)
@@ -93,12 +107,8 @@ def start():
 
 @app.route("/stop", methods=["POST"])
 def stop():
-    request_body = request.get_json(silent=True) or {}
-    finalize_value = request_body.get("finalize_recording", False)
-    if isinstance(finalize_value, str):
-        finalize_recording = finalize_value.strip().lower() in {"1", "true", "yes", "on"}
-    else:
-        finalize_recording = bool(finalize_value)
+    body = request.get_json(silent=True) or {}
+    finalize_recording = _parse_bool(body.get("finalize_recording", False), default=False)
 
     state.request_stop(finalize=finalize_recording)
     if finalize_recording:
@@ -107,13 +117,15 @@ def stop():
         state.update_status("idle", "Recording stopped.", is_final=True)
     return jsonify({"ok": True})
 
+# ── Translation routes ───────────────────────────────────────────────
+
 @app.route("/translate", methods=["POST"])
 def translate():
-    request_body = request.get_json(silent=True) or {}
-    text = request_body.get("text", "").strip()
-    source_language = request_body.get("source_lang", "pl")
-    target_language = request_body.get("target_lang", "en")
-    models_dir = request_body.get("models_dir", "models")
+    body = request.get_json(silent=True) or {}
+    text = body.get("text", "").strip()
+    source_language = body.get("source_lang", "pl")
+    target_language = body.get("target_lang", "en")
+    models_dir = body.get("models_dir", "models")
 
     if not text:
         return jsonify({"ok": False, "error": "No text provided."}), 400
@@ -151,7 +163,7 @@ def download_status():
     return jsonify(translate_engine.get_download_status())
 
 
-# tts endpoints
+# ── TTS routes ───────────────────────────────────────────────────────
 
 @app.route("/tts/voices")
 def list_voices():
@@ -237,6 +249,8 @@ def list_tts_devices():
     except Exception as exc:
         log.error("Error listing TTS devices: %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
+
+# ── Entry point ──────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     try:
