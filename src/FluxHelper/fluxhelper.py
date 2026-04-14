@@ -228,6 +228,16 @@ def tts_status():
         log.error("Error getting TTS status: %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
 
+
+@app.route("/tts/devices")
+def list_tts_devices():
+    try:
+        devices = tts_engine.list_output_devices()
+        return jsonify({"ok": True, "devices": devices})
+    except Exception as exc:
+        log.error("Error listing TTS devices: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
 if __name__ == "__main__":
     try:
         port = int(sys.argv[1]) if len(sys.argv) > 1 else 5001

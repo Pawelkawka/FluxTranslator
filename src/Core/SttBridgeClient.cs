@@ -259,6 +259,20 @@ public class SttBridgeClient : IDisposable
         }
     }
 
+    public async Task<TtsDeviceInfo[]> ListDevicesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var resp = await _http.GetFromJsonAsync<TtsDevicesResponse>($"{_baseUrl}/tts/devices", ct);
+            return resp?.Devices ?? [];
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"SttBridge.ListDevices error: {ex.Message}");
+            return [];
+        }
+    }
+
     private record ModelsListResponse([property: JsonPropertyName("models")] string[] Models);
     private record DownloadStartResponse(
         [property: JsonPropertyName("ok")]      bool   Ok,
@@ -269,6 +283,7 @@ public class SttBridgeClient : IDisposable
         [property: JsonPropertyName("ok")] bool Ok,
         [property: JsonPropertyName("voice")] string Voice);
     private record TtsStatusResponse([property: JsonPropertyName("speaking")] bool Speaking);
+    private record TtsDevicesResponse([property: JsonPropertyName("devices")] TtsDeviceInfo[] Devices);
 
     public void Dispose() => _http.Dispose();
 }
@@ -283,3 +298,10 @@ public record TtsLanguageInfo(
     [property: JsonPropertyName("code")] string Code,
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("voices")] string[] Voices);
+
+public record TtsDeviceInfo(
+    [property: JsonPropertyName("index")] int Index,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("channels")] int Channels,
+    [property: JsonPropertyName("sample_rate")] double? SampleRate,
+    [property: JsonPropertyName("is_default")] bool IsDefault);

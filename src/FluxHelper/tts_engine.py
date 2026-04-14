@@ -17,6 +17,35 @@ log = logging.getLogger(__name__)
 
 TTS_SAMPLE_RATE = 24000
 
+
+def _resolve_device_id(device_id) -> Optional[int]:
+    if device_id is None:
+        return None
+
+    if isinstance(device_id, int):
+        return device_id
+
+    if isinstance(device_id, str):
+        try:
+            return int(device_id)
+        except ValueError:
+            pass
+
+        target = device_id.strip()
+        try:
+            devices = sd.query_devices()
+            for idx, dev in enumerate(devices):
+                dev_name = dev.get("name", "")
+                if target in dev_name or dev_name in target:
+                    return idx
+        except Exception as exc:
+            log.warning("Failed to query devices for ID resolution: %s", exc)
+
+        log.warning("Could not resolve device ID '%s' to an integer index", device_id)
+        return None
+
+    return None
+
 # fallback voices
 VOICE_FALLBACKS = {
     "no-NO-FinnNeural": "no-NO-PernilleNeural",
@@ -279,15 +308,16 @@ def _decode_mp3_to_wav(mp3_path: str, wav_path: str) -> tuple[np.ndarray, int]:
         raise RuntimeError("FFmpeg not found. Please install FFmpeg.")
 
 
-def _validate_speak_request(device_id: Optional[int]) -> None:
+def _validate_speak_request(device_id) -> None:
     if shutil.which("ffmpeg") is None:
         raise RuntimeError("FFmpeg not found. Please install FFmpeg.")
 
-    if device_id is None:
+    resolved_id = _resolve_device_id(device_id)
+    if resolved_id is None:
         return
 
     try:
-        device = sd.query_devices(device_id, "output")
+        device = sd.query_devices(resolved_id, "output")
     except Exception as exc:
         raise RuntimeError(f"Invalid output device: {device_id}") from exc
 
@@ -313,7 +343,7 @@ def _write_samples(
 def _speak_text(
     text: str,
     voice: str,
-    device_id: Optional[int] = None,
+    device_id=None,
     rate: str = "+0%",
     volume: str = "+0%",
     pitch: str = "+0Hz",
@@ -324,6 +354,7 @@ def _speak_text(
         return
 
     stop_event = stop_event or threading.Event()
+    resolved_device_id = _resolve_device_id(device_id)
 
     voices_to_try = [voice]
     if voice in VOICE_FALLBACKS:
@@ -340,7 +371,8 @@ def _speak_text(
         tmp_mp3 = None
         tmp_wav = None
         try:
-            log.info("Starting TTS: voice=%s, device_id=%s, text=%r", attempt_voice, device_id, text[:50])
+            log.info("Starting TTS: voice=%s, device_id=%s (resolved=%s), text=%r", 
+                     attempt_voice, device_id, resolved_device_id, text[:50])
 
             comm = edge_tts.Communicate(
                 text=text.strip(),
@@ -381,7 +413,7 @@ def _speak_text(
                 break
 
             with sd.OutputStream(
-                device=device_id,
+                device=resolved_device_id,
                 samplerate=sample_rate,
                 channels=1,
                 dtype=np.float32,
@@ -478,6 +510,25 @@ def stop_speaking() -> None:
         if _is_speaking:
             log.info("Stopping TTS playback")
             _is_speaking = False
+
+
+def list_output_devices() -> list[dict]:
+    """List available audio output devices with their indices and names."""
+    devices = []
+    try:
+        dev_list = sd.query_devices()
+        for idx, dev in enumerate(dev_list):
+            if dev.get("max_output_channels", 0) > 0:
+                devices.append({
+                    "index": idx,
+                    "name": dev.get("name", ""),
+                    "channels": dev.get("max_output_channels"),
+                    "sample_rate": dev.get("default_samplerate"),
+                    "is_default": idx == sd.default.device[1] if sd.default.device[1] is not None else False,
+                })
+    except Exception as exc:
+        log.error("Error listing output devices: %s", exc)
+    return devices
 
 
 def is_currently_speaking() -> bool:
