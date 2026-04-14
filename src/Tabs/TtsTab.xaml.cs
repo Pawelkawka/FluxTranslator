@@ -50,7 +50,6 @@ public partial class TtsTab : UserControl
 
         // load tts enabled state
         ChkTtsEnabled.IsChecked = _config!.TtsEnabled;
-        UpdateTtsStatus();
 
         // load rate/volume/pitch options
         LoadRateOptions();
@@ -371,18 +370,6 @@ public partial class TtsTab : UserControl
         return false;
     }
 
-    private void UpdateTtsStatus()
-    {
-        if (ChkTtsEnabled.IsChecked == true)
-        {
-            TbTtsStatus.Text = "Voice TTS is enabled. Translations will be spoken aloud.";
-        }
-        else
-        {
-            TbTtsStatus.Text = "Voice TTS is disabled";
-        }
-    }
-
     private void ChkTtsEnabled_Checked(object sender, RoutedEventArgs e) => OnTtsEnabledChanged();
     private void ChkTtsEnabled_Unchecked(object sender, RoutedEventArgs e) => OnTtsEnabledChanged();
 
@@ -391,7 +378,6 @@ public partial class TtsTab : UserControl
         if (_loading || _config is null) return;
         _config.TtsEnabled = ChkTtsEnabled.IsChecked == true;
         _manager?.Save();
-        UpdateTtsStatus();
         TtsSettingsChanged?.Invoke();
     }
 
