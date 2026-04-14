@@ -60,12 +60,6 @@
 								  SelectionChanged="CbOutputDevice_SelectionChanged"/>
 					</Grid>
 
-					<Button x:Name="BtnRefreshDevices"
-							Content="↺  Refresh Devices"
-							Style="{StaticResource GhostButton}"
-							HorizontalAlignment="Left"
-							Margin="0,2,0,0"
-							Click="BtnRefreshDevices_Click"/>
 					<TextBlock x:Name="TbTtsStatus" Visibility="Collapsed"/>
 
 					<Separator Background="{StaticResource BorderBrush}" Margin="0,14,0,10"/>

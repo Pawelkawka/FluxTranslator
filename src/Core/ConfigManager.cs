@@ -95,6 +95,7 @@ public class ConfigManager
         Config.BorderWidth       = Math.Clamp(Config.BorderWidth,       0, 10);
 
         Config.OverlayDisplayTime    = Math.Clamp(Config.OverlayDisplayTime,    1, 120);
+        Config.MaxRecordingSeconds   = Math.Clamp(Config.MaxRecordingSeconds,   1, AppSettings.DefaultMaxRecordingSeconds);
         Config.InitialSilenceTimeout = Math.Clamp(Config.InitialSilenceTimeout, 1.0, 30.0);
         Config.SilenceTimeout        = Math.Clamp(Config.SilenceTimeout,        0.05, 5.0);
 

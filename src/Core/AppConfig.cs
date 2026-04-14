@@ -28,6 +28,7 @@ public class AppConfig
     public bool   FontBold          { get; set; } = AppSettings.DefaultFontBold;
 
     public int    OverlayDisplayTime   { get; set; } = AppSettings.DefaultOverlayDisplayTime;
+    public int    MaxRecordingSeconds   { get; set; } = AppSettings.DefaultMaxRecordingSeconds;
     public double InitialSilenceTimeout{ get; set; } = AppSettings.DefaultInitialSilenceTimeout;
     public double SilenceTimeout       { get; set; } = AppSettings.DefaultSilenceTimeout;
 

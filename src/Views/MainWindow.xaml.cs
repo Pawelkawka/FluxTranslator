@@ -160,6 +160,9 @@ public partial class MainWindow : Window
         {
             target.Visibility = Visibility.Visible;
             AnimateTab(target);
+
+            if (ReferenceEquals(target, TabTts))
+                TabTts.RefreshOutputDevices();
         }
     }
 

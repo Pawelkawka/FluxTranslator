@@ -162,7 +162,7 @@ public class AppController : IDisposable
             config.SourceLanguage,
             config.InitialSilenceTimeout,
             config.SilenceTimeout,
-            AppSettings.DefaultMaxRecordingSeconds,
+            config.MaxRecordingSeconds,
             config.EnableManualMode);
 
         if (!ok)
@@ -216,7 +216,7 @@ public class AppController : IDisposable
     private async Task PollLoopAsync(CancellationToken ct)
     {
         var maxWaitMs = (int)TimeSpan.FromSeconds(
-            AppSettings.DefaultMaxRecordingSeconds
+            _configManager.Config.MaxRecordingSeconds
             + _configManager.Config.InitialSilenceTimeout
             + 20.0
         ).TotalMilliseconds;

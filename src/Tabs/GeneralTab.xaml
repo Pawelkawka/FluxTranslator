@@ -188,6 +188,7 @@
 										Grid.Column="1"
 										Content="↺  Refresh"
 										Style="{StaticResource GhostButton}"
+										Width="{Binding ActualWidth, ElementName=BtnOpenModelsDir}"
 										Click="BtnRefreshModels_Click"/>
 							</Grid>
 

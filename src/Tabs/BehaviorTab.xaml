@@ -9,37 +9,74 @@
 
             <TextBlock Style="{StaticResource H2}" Text="Overlay"/>
             <Border Style="{StaticResource SettingCard}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="180"/>
-                        <ColumnDefinition Width="40"/>
-                    </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
 
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Overlay Display Time"
-                                   Foreground="{StaticResource TextPrimaryBrush}"
-                                   FontSize="13"/>
-                        <TextBlock Text="How long the translation overlay stays on screen"
-                                   Style="{StaticResource SubText}"
-                                   Margin="0,4,0,0"/>
-                    </StackPanel>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Overlay Display Time"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="13"/>
+                            <TextBlock Text="How long the translation overlay stays on screen"
+                                       Style="{StaticResource SubText}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
 
-                    <Slider x:Name="SlDisplayTime"
-                            Grid.Column="1"
-                            Minimum="2" Maximum="60" TickFrequency="1"
-                            IsSnapToTickEnabled="True"
-                            Style="{StaticResource ModernSlider}"
-                            VerticalAlignment="Center"
-                            ValueChanged="SlDisplayTime_ValueChanged"/>
+                        <Slider x:Name="SlDisplayTime"
+                                Grid.Column="1"
+                                Minimum="2" Maximum="60" TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                Style="{StaticResource ModernSlider}"
+                                VerticalAlignment="Center"
+                                ValueChanged="SlDisplayTime_ValueChanged"/>
 
-                    <TextBlock x:Name="LblDisplayTime"
-                               Grid.Column="2"
-                               VerticalAlignment="Center"
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               FontSize="12"
-                               Margin="6,0,0,0"/>
-                </Grid>
+                        <TextBlock x:Name="LblDisplayTime"
+                                   Grid.Column="2"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12"
+                                   Margin="6,0,0,0"/>
+                    </Grid>
+
+                    <Separator Background="{StaticResource BorderBrush}" Margin="0,14,0,10"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Max Recording Time"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="13"/>
+                            <TextBlock Text="Safety limit for one recording session before STT stops automatically"
+                                       Style="{StaticResource SubText}"
+                                       Margin="0,4,0,0"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <Slider x:Name="SlMaxRecordingSeconds"
+                                Grid.Column="1"
+                                Minimum="1" Maximum="120" TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                Style="{StaticResource ModernSlider}"
+                                VerticalAlignment="Center"
+                                ValueChanged="SlMaxRecordingSeconds_ValueChanged"/>
+
+                        <TextBlock x:Name="LblMaxRecordingSeconds"
+                                   Grid.Column="2"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12"
+                                   Margin="6,0,0,0"/>
+                    </Grid>
+                </StackPanel>
             </Border>
 
             <TextBlock Style="{StaticResource H2}" Text="Speech Capture"/>

@@ -30,6 +30,8 @@ public partial class BehaviorTab : UserControl
 
         SlDisplayTime.Value = Math.Clamp(_config.OverlayDisplayTime, SlDisplayTime.Minimum, SlDisplayTime.Maximum);
         LblDisplayTime.Text = $"{SlDisplayTime.Value}s";
+        SlMaxRecordingSeconds.Value = Math.Clamp(_config.MaxRecordingSeconds, SlMaxRecordingSeconds.Minimum, SlMaxRecordingSeconds.Maximum);
+        LblMaxRecordingSeconds.Text = $"{SlMaxRecordingSeconds.Value}s";
         RbManualMode.IsChecked = _config.EnableManualMode;
         RbAutoMode.IsChecked = !_config.EnableManualMode;
 
@@ -46,6 +48,16 @@ public partial class BehaviorTab : UserControl
         _manager.Save();
     }
 
+    private void SlMaxRecordingSeconds_ValueChanged(object s, System.Windows.RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (LblMaxRecordingSeconds != null)
+            LblMaxRecordingSeconds.Text = $"{e.NewValue}s";
+
+        if (_loading || _config is null) return;
+        _config.MaxRecordingSeconds = (int)SlMaxRecordingSeconds.Value;
+        _manager.Save();
+    }
+
     private void RecordingMode_Checked(object sender, System.Windows.RoutedEventArgs e)
     {
         if (_loading || _config is null) return;
@@ -53,6 +65,4 @@ public partial class BehaviorTab : UserControl
         _config.EnableManualMode = RbManualMode.IsChecked == true;
         _manager.Save();
     }
-
-
 }

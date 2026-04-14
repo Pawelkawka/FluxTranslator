@@ -35,6 +35,14 @@ public partial class TtsTab : UserControl
             LoadValues();
     }
 
+    public void RefreshOutputDevices()
+    {
+        if (_config is null)
+            return;
+
+        _ = RefreshOutputDevicesAsync();
+    }
+
     private async void LoadValues()
     {
         _loading = true;
@@ -170,6 +178,21 @@ public partial class TtsTab : UserControl
         }
 
         await Task.CompletedTask;
+    }
+
+    private async Task RefreshOutputDevicesAsync()
+    {
+        var wasLoading = _loading;
+        _loading = true;
+
+        try
+        {
+            await LoadOutputDevicesAsync();
+        }
+        finally
+        {
+            _loading = wasLoading;
+        }
     }
 
     private async Task<bool> LoadLanguagesAsync()
@@ -430,14 +453,4 @@ public partial class TtsTab : UserControl
     private void CbPitch_SelectionChanged(object sender, SelectionChangedEventArgs e)
         => SaveTtsComboValue(CbPitch,  v => _config!.TtsPitch  = v);
 
-    private async void BtnRefreshDevices_Click(object sender, RoutedEventArgs e)
-    {
-        BtnRefreshDevices.IsEnabled = false;
-        TbTtsStatus.Text = "Refreshing audio devices...";
-
-        await LoadOutputDevicesAsync();
-
-        BtnRefreshDevices.IsEnabled = true;
-        TbTtsStatus.Text = "Audio devices refreshed";
-    }
 }
