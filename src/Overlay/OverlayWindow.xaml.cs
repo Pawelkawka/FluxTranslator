@@ -92,7 +92,7 @@ public partial class OverlayWindow : Window
         DisplayText.MaxWidth   = 800;
         DisplayText.MinWidth   = 250;
 
-        // bckground
+        // background
         var bg   = ParseColor(_config.BackgroundColor, Colors.Black);
         var alpha = (byte)Math.Round(_config.BackgroundOpacity / 100.0 * 255);
         BgBrush.Color = Color.FromArgb(alpha, bg.R, bg.G, bg.B);

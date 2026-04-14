@@ -85,64 +85,53 @@ public partial class TtsTab : UserControl
 
     private void LoadRateOptions()
     {
-        CbRate.Items.Clear();
-        var rates = new[]
+        LoadComboOptions(CbRate, new[]
         {
-            (Label: "-50%", Value: "-50%"),
-            (Label: "-30%", Value: "-30%"),
-            (Label: "-20%", Value: "-20%"),
-            (Label: "-10%", Value: "-10%"),
-            (Label: "0", Value: "+0%"),
-            (Label: "+10%", Value: "+10%"),
-            (Label: "+20%", Value: "+20%"),
-            (Label: "+30%", Value: "+30%"),
-            (Label: "+50%", Value: "+50%")
-        };
-
-        foreach (var (label, value) in rates)
-        {
-            CbRate.Items.Add(new ComboBoxItem { Content = label, Tag = value });
-        }
+            ("-50%",  "-50%"),
+            ("-30%",  "-30%"),
+            ("-20%",  "-20%"),
+            ("-10%",  "-10%"),
+            ("0",     "+0%"),
+            ("+10%",  "+10%"),
+            ("+20%",  "+20%"),
+            ("+30%",  "+30%"),
+            ("+50%",  "+50%"),
+        });
     }
 
     private void LoadVolumeOptions()
     {
-        CbVolume.Items.Clear();
-        var volumes = new[]
+        LoadComboOptions(CbVolume, new[]
         {
-            (Label: "-50%", Value: "-50%"),
-            (Label: "-30%", Value: "-30%"),
-            (Label: "-20%", Value: "-20%"),
-            (Label: "-10%", Value: "-10%"),
-            (Label: "0%", Value: "+0%"),
-            (Label: "+10%", Value: "+10%"),
-            (Label: "+20%", Value: "+20%"),
-            (Label: "+30%", Value: "+30%"),
-            (Label: "+50%", Value: "+50%")
-        };
-
-        foreach (var (label, value) in volumes)
-        {
-            CbVolume.Items.Add(new ComboBoxItem { Content = label, Tag = value });
-        }
+            ("-50%",  "-50%"),
+            ("-30%",  "-30%"),
+            ("-20%",  "-20%"),
+            ("-10%",  "-10%"),
+            ("0%",    "+0%"),
+            ("+10%",  "+10%"),
+            ("+20%",  "+20%"),
+            ("+30%",  "+30%"),
+            ("+50%",  "+50%"),
+        });
     }
 
     private void LoadPitchOptions()
     {
-        CbPitch.Items.Clear();
-        var pitches = new[]
+        LoadComboOptions(CbPitch, new[]
         {
-            (Label: "-20 Hz", Value: "-20Hz"),
-            (Label: "-10 Hz", Value: "-10Hz"),
-            (Label: "0 Hz", Value: "+0Hz"),
-            (Label: "+10 Hz", Value: "+10Hz"),
-            (Label: "+20 Hz", Value: "+20Hz")
-        };
+            ("-20 Hz", "-20Hz"),
+            ("-10 Hz", "-10Hz"),
+            ("0 Hz",   "+0Hz"),
+            ("+10 Hz", "+10Hz"),
+            ("+20 Hz", "+20Hz"),
+        });
+    }
 
-        foreach (var (label, value) in pitches)
-        {
-            CbPitch.Items.Add(new ComboBoxItem { Content = label, Tag = value });
-        }
+    private static void LoadComboOptions(ItemsControl cb, (string Label, string Value)[] options)
+    {
+        cb.Items.Clear();
+        foreach (var (label, value) in options)
+            cb.Items.Add(new ComboBoxItem { Content = label, Tag = value });
     }
 
     private async Task LoadOutputDevicesAsync()
@@ -371,21 +360,13 @@ public partial class TtsTab : UserControl
         }
     }
 
-    private void ChkTtsEnabled_Checked(object sender, RoutedEventArgs e)
-    {
-        if (_loading || _config is null) return;
-        
-        _config.TtsEnabled = true;
-        _manager?.Save();
-        UpdateTtsStatus();
-        TtsSettingsChanged?.Invoke();
-    }
+    private void ChkTtsEnabled_Checked(object sender, RoutedEventArgs e) => OnTtsEnabledChanged();
+    private void ChkTtsEnabled_Unchecked(object sender, RoutedEventArgs e) => OnTtsEnabledChanged();
 
-    private void ChkTtsEnabled_Unchecked(object sender, RoutedEventArgs e)
+    private void OnTtsEnabledChanged()
     {
         if (_loading || _config is null) return;
-        
-        _config.TtsEnabled = false;
+        _config.TtsEnabled = ChkTtsEnabled.IsChecked == true;
         _manager?.Save();
         UpdateTtsStatus();
         TtsSettingsChanged?.Invoke();
@@ -429,41 +410,25 @@ public partial class TtsTab : UserControl
         }
     }
 
-    private void CbRate_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void SaveTtsComboValue(ComboBox cb, Action<string> setter)
     {
-        if (_loading || _config is null || CbRate.SelectedItem is not ComboBoxItem item) return;
-        
-        if (item.Tag is string rate)
+        if (_loading || _config is null || cb.SelectedItem is not ComboBoxItem item) return;
+        if (item.Tag is string value)
         {
-            _config.TtsRate = rate;
+            setter(value);
             _manager?.Save();
             TtsSettingsChanged?.Invoke();
         }
     }
+
+    private void CbRate_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        => SaveTtsComboValue(CbRate,   v => _config!.TtsRate   = v);
 
     private void CbVolume_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading || _config is null || CbVolume.SelectedItem is not ComboBoxItem item) return;
-        
-        if (item.Tag is string volume)
-        {
-            _config.TtsVolume = volume;
-            _manager?.Save();
-            TtsSettingsChanged?.Invoke();
-        }
-    }
+        => SaveTtsComboValue(CbVolume, v => _config!.TtsVolume = v);
 
     private void CbPitch_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_loading || _config is null || CbPitch.SelectedItem is not ComboBoxItem item) return;
-        
-        if (item.Tag is string pitch)
-        {
-            _config.TtsPitch = pitch;
-            _manager?.Save();
-            TtsSettingsChanged?.Invoke();
-        }
-    }
+        => SaveTtsComboValue(CbPitch,  v => _config!.TtsPitch  = v);
 
     private async void BtnRefreshDevices_Click(object sender, RoutedEventArgs e)
     {
