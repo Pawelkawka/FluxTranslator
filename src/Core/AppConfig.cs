@@ -28,8 +28,19 @@ public class AppConfig
     public bool   FontBold          { get; set; } = AppSettings.DefaultFontBold;
 
     public int    OverlayDisplayTime   { get; set; } = AppSettings.DefaultOverlayDisplayTime;
+    public int    MaxRecordingSeconds   { get; set; } = AppSettings.DefaultMaxRecordingSeconds;
     public double InitialSilenceTimeout{ get; set; } = AppSettings.DefaultInitialSilenceTimeout;
     public double SilenceTimeout       { get; set; } = AppSettings.DefaultSilenceTimeout;
 
-    public bool EnableManualMode { get; set; } = false;
+    public bool EnableManualMode { get; set; } = AppSettings.DefaultEnableManualMode;
+
+    // tts settings
+    public bool  TtsEnabled        { get; set; } = AppSettings.DefaultTtsEnabled;
+    public string TtsOutputDeviceId { get; set; } = AppSettings.DefaultTtsOutputDeviceId;
+    public string TtsLanguage      { get; set; } = AppSettings.DefaultTtsLanguage;
+    public string TtsVoice         { get; set; } = AppSettings.DefaultTtsVoice;
+    public Dictionary<string, string> TtsVoiceSelections { get; set; } = [];
+    public string TtsRate          { get; set; } = AppSettings.DefaultTtsRate;
+    public string TtsVolume        { get; set; } = AppSettings.DefaultTtsVolume;
+    public string TtsPitch         { get; set; } = AppSettings.DefaultTtsPitch;
 }

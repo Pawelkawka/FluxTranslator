@@ -8,6 +8,7 @@ public sealed class HotkeyManager : IDisposable
 {
     [DllImport("user32.dll")] private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
     [DllImport("user32.dll")] private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+    [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int vKey);
     [DllImport("user32.dll")] private static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hMod, uint dwThreadId);
     [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(IntPtr hhk);
     [DllImport("user32.dll")] private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
@@ -20,6 +21,12 @@ public sealed class HotkeyManager : IDisposable
     private const uint MOD_SHIFT   = 0x0004;
     private const uint MOD_WIN     = 0x0008;
     private const uint MOD_NOREPEAT = 0x4000;
+
+    private const int VK_CONTROL = 0x11;
+    private const int VK_SHIFT = 0x10;
+    private const int VK_MENU = 0x12;
+    private const int VK_LWIN = 0x5B;
+    private const int VK_RWIN = 0x5C;
 
     private const int WM_HOTKEY = 0x0312;
     private const int WH_MOUSE_LL = 14;
@@ -277,8 +284,62 @@ public sealed class HotkeyManager : IDisposable
 
     private static bool IsMouseButtonMatch(string hotkey, int pressedButton)
     {
-        return IsMouseButton(hotkey, out int registeredButton) && registeredButton == pressedButton;
+        if (!IsMouseButton(hotkey, out int registeredButton) || registeredButton != pressedButton)
+            return false;
+
+        var requiredModifiers = ParseModifiers(hotkey);
+        return HasRequiredModifiers(requiredModifiers);
     }
+
+    private static uint ParseModifiers(string hotkey)
+    {
+        uint modifiers = 0;
+
+        foreach (var part in hotkey.Split('+', StringSplitOptions.RemoveEmptyEntries))
+        {
+            switch (part.Trim().ToLowerInvariant())
+            {
+                case "ctrl":
+                case "control":
+                    modifiers |= MOD_CONTROL;
+                    break;
+                case "shift":
+                    modifiers |= MOD_SHIFT;
+                    break;
+                case "alt":
+                    modifiers |= MOD_ALT;
+                    break;
+                case "win":
+                    modifiers |= MOD_WIN;
+                    break;
+            }
+        }
+
+        return modifiers;
+    }
+
+    private static bool HasRequiredModifiers(uint requiredModifiers)
+    {
+        if ((requiredModifiers & MOD_CONTROL) != 0 && !IsKeyPressed(VK_CONTROL))
+            return false;
+
+        if ((requiredModifiers & MOD_SHIFT) != 0 && !IsKeyPressed(VK_SHIFT))
+            return false;
+
+        if ((requiredModifiers & MOD_ALT) != 0 && !IsKeyPressed(VK_MENU))
+            return false;
+
+        if ((requiredModifiers & MOD_WIN) != 0 && !IsEitherKeyPressed(VK_LWIN, VK_RWIN))
+            return false;
+
+        return true;
+    }
+
+    private static bool IsKeyPressed(int virtualKey)
+        => (GetAsyncKeyState(virtualKey) & 0x8000) != 0;
+
+    private static bool IsEitherKeyPressed(int firstVirtualKey, int secondVirtualKey)
+        => IsKeyPressed(firstVirtualKey) || IsKeyPressed(secondVirtualKey);
 
     public void Dispose()
     {

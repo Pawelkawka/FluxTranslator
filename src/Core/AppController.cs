@@ -13,6 +13,7 @@ public class AppController : IDisposable
     private readonly ConfigManager _configManager;
     private readonly SttBridgeClient _sttBridgeClient;
     private readonly TranslationService _translationService;
+    private readonly TtsController _ttsController;
 
     private Process? _backendProcess;
 
@@ -23,12 +24,16 @@ public class AppController : IDisposable
 
     public bool IsListening => _isListening;
     public string LastTranslation => _lastTranslation;
+    public TtsController Tts => _ttsController;
 
     public AppController(ConfigManager cfg)
     {
         _configManager = cfg;
         _sttBridgeClient = new SttBridgeClient(AppSettings.SttPort);
         _translationService = new TranslationService();
+        _ttsController = new TtsController(cfg);
+        
+        TranslationReady += OnTranslationReady;
     }
 
     public async Task StartBackendAsync()
@@ -133,7 +138,7 @@ public class AppController : IDisposable
     {
         if (_isListening)
         {
-            await StopListeningAsync();
+            await StopListeningAsync(finalizeRecording: _configManager.Config.EnableManualMode);
         }
         else
         {
@@ -156,7 +161,9 @@ public class AppController : IDisposable
         bool ok = await _sttBridgeClient.StartAsync(
             config.SourceLanguage,
             config.InitialSilenceTimeout,
-            config.SilenceTimeout);
+            config.SilenceTimeout,
+            config.MaxRecordingSeconds,
+            config.EnableManualMode);
 
         if (!ok)
         {
@@ -168,10 +175,15 @@ public class AppController : IDisposable
         _ = Task.Run(() => PollLoopAsync(_pollCts.Token));
     }
 
-    public async Task StopListeningAsync()
+    public async Task StopListeningAsync(bool finalizeRecording = false)
     {
+        if (!finalizeRecording)
+        {
+            _pollCts?.Cancel();
+        }
+
         _isListening = false;
-        await _sttBridgeClient.StopAsync();
+        await _sttBridgeClient.StopAsync(finalizeRecording);
     }
 
     public async Task StopAllAsync()
@@ -184,6 +196,7 @@ public class AppController : IDisposable
         }
         _isListening  = false;
         _lastSttState = "idle";
+        await _ttsController.StopAsync();
     }
 
     public void CopyLastTranslation()
@@ -202,7 +215,11 @@ public class AppController : IDisposable
 
     private async Task PollLoopAsync(CancellationToken ct)
     {
-        const int maxWaitMs = 90_000;
+        var maxWaitMs = (int)TimeSpan.FromSeconds(
+            _configManager.Config.MaxRecordingSeconds
+            + _configManager.Config.InitialSilenceTimeout
+            + 20.0
+        ).TotalMilliseconds;
         var deadline = DateTime.UtcNow.AddMilliseconds(maxWaitMs);
 
         while (!ct.IsCancellationRequested && DateTime.UtcNow < deadline)
@@ -229,6 +246,10 @@ public class AppController : IDisposable
                             _isListening = false;
                             return;
 
+                        case "idle" when status.IsFinal:
+                            _isListening = false;
+                            return;
+
                         default:
                             if (!status.IsFinal)
                                 Emit(status.Text, false, false);
@@ -240,6 +261,13 @@ public class AppController : IDisposable
             catch (Exception ex) { AppLogger.Error($"Poll loop error: {ex.Message}"); }
 
             await Task.Delay(200, ct);
+        }
+
+        if (!ct.IsCancellationRequested && DateTime.UtcNow >= deadline)
+        {
+            AppLogger.Warn("STT polling timed out; stopping active recording.");
+            await _sttBridgeClient.StopAsync(finalizeRecording: true);
+            Emit("Recording timed out.", true, true);
         }
 
         _isListening = false;
@@ -269,6 +297,18 @@ public class AppController : IDisposable
         _lastTranslation = ok ? result : string.Empty;
         Emit(result, !ok, true);
         if (ok) TranslationReady?.Invoke(result);
+    }
+
+    private async void OnTranslationReady(string translation)
+    {
+        try
+        {
+            await _ttsController.SpeakAsync(translation);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Warn($"TTS failed to speak translation: {ex.Message}");
+        }
     }
 
     private void Emit(string text, bool isError, bool isFinal, int durationMs = 0)
@@ -314,6 +354,7 @@ public class AppController : IDisposable
 
     public async Task<ModelDownloadStatus?> GetModelDownloadStatusAsync(CancellationToken ct = default)
         => await _sttBridgeClient.GetModelDownloadStatusAsync(ct);
+    
     public void Dispose()
     {
         _pollCts?.Cancel();
@@ -330,5 +371,6 @@ public class AppController : IDisposable
         _backendProcess?.Dispose();
         _sttBridgeClient.Dispose();
         _translationService.Dispose();
+        _ttsController.Dispose();
     }
 }

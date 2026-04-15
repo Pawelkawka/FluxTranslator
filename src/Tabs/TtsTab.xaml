@@ -1,0 +1,198 @@
+<UserControl x:Class="FluxTranslator.Tabs.TtsTab"
+			 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d"
+			 d:DesignWidth="960" d:DesignHeight="720">
+	<ScrollViewer VerticalScrollBarVisibility="Auto"
+				  HorizontalScrollBarVisibility="Disabled">
+		<StackPanel Margin="28,16,28,24">
+			<TextBlock Style="{StaticResource H1}" Text="Voice TTS"/>
+
+			<TextBlock Style="{StaticResource H2}" Text="Settings"/>
+			<Border Style="{StaticResource SettingCard}">
+				<StackPanel>
+					<Grid Margin="0,0,0,10">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="120"/>
+						</Grid.ColumnDefinitions>
+
+						<StackPanel VerticalAlignment="Center">
+							<TextBlock Text="Enable Voice TTS"
+									   Foreground="{StaticResource TextPrimaryBrush}"
+									   FontSize="13"
+									   FontWeight="SemiBold"/>
+							<TextBlock Text="Automatically speak translations aloud through the selected audio device"
+									   Style="{StaticResource SubText}"
+									   TextWrapping="Wrap"
+									   Margin="0,4,0,0"/>
+						</StackPanel>
+
+						<CheckBox x:Name="ChkTtsEnabled"
+								  Grid.Column="1"
+								  Style="{StaticResource ToggleSwitch}"
+								  VerticalAlignment="Center"
+								  HorizontalAlignment="Right"
+								  Checked="ChkTtsEnabled_Checked"
+								  Unchecked="ChkTtsEnabled_Unchecked"/>
+					</Grid>
+
+					<Separator Background="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+
+					<Grid Margin="0,0,0,10">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="260"/>
+						</Grid.ColumnDefinitions>
+
+						<StackPanel VerticalAlignment="Center">
+							<TextBlock Text="Output Device"
+									   Foreground="{StaticResource TextPrimaryBrush}"
+									   FontSize="13"/>
+							<TextBlock Text="Select the audio device for TTS"
+									   Style="{StaticResource SubText}"
+									   TextWrapping="Wrap"
+									   Margin="0,4,0,0"/>
+						</StackPanel>
+
+						<ComboBox x:Name="CbOutputDevice"
+								  Grid.Column="1"
+								  Style="{StaticResource ModernComboBox}"
+								  VerticalAlignment="Center"
+								  SelectionChanged="CbOutputDevice_SelectionChanged"/>
+					</Grid>
+
+					<Separator Background="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+
+					<Grid Margin="0,0,0,10">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="260"/>
+						</Grid.ColumnDefinitions>
+
+						<StackPanel VerticalAlignment="Center">
+							<TextBlock Text="Language"
+									   Foreground="{StaticResource TextPrimaryBrush}"
+									   FontSize="13"/>
+							<TextBlock Text="Choose the language used for TTS playback"
+									   Style="{StaticResource SubText}"
+									   TextWrapping="Wrap"
+									   Margin="0,4,0,0"/>
+						</StackPanel>
+
+						<ComboBox x:Name="CbLanguage"
+								  Grid.Column="1"
+								  Style="{StaticResource ModernComboBox}"
+								  VerticalAlignment="Center"
+								  SelectionChanged="CbLanguage_SelectionChanged"/>
+					</Grid>
+
+					<Separator Background="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="260"/>
+						</Grid.ColumnDefinitions>
+
+						<StackPanel VerticalAlignment="Center">
+							<TextBlock Text="Voice"
+									   Foreground="{StaticResource TextPrimaryBrush}"
+									   FontSize="13"/>
+							<TextBlock Text="Choose the voice used for the selected language"
+									   Style="{StaticResource SubText}"
+									   TextWrapping="Wrap"
+									   Margin="0,4,0,0"/>
+						</StackPanel>
+
+						<ComboBox x:Name="CbVoice"
+								  Grid.Column="1"
+								  Style="{StaticResource ModernComboBox}"
+								  VerticalAlignment="Center"
+								  SelectionChanged="CbVoice_SelectionChanged"/>
+					</Grid>
+				</StackPanel>
+			</Border>
+
+			<TextBlock Style="{StaticResource H2}" Text="Voice Settings"/>
+			<Border Style="{StaticResource SettingCard}">
+				<StackPanel>
+					<Grid Margin="0,0,0,10">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="260"/>
+						</Grid.ColumnDefinitions>
+
+						<StackPanel VerticalAlignment="Center">
+							<TextBlock Text="Rate"
+									   Foreground="{StaticResource TextPrimaryBrush}"
+									   FontSize="13"/>
+							<TextBlock Text="Adjust how quickly the selected voice speaks"
+									   Style="{StaticResource SubText}"
+									   TextWrapping="Wrap"
+									   Margin="0,4,0,0"/>
+						</StackPanel>
+
+						<ComboBox x:Name="CbRate"
+								  Grid.Column="1"
+								  Style="{StaticResource ModernComboBox}"
+								  VerticalAlignment="Center"
+								  SelectionChanged="CbRate_SelectionChanged"/>
+					</Grid>
+
+					<Separator Background="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+
+					<Grid Margin="0,0,0,10">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="260"/>
+						</Grid.ColumnDefinitions>
+
+						<StackPanel VerticalAlignment="Center">
+							<TextBlock Text="Volume"
+									Foreground="{StaticResource TextPrimaryBrush}"
+									FontSize="13"/>
+							<TextBlock Text="Adjust the playback loudness for the selected output device"
+									Style="{StaticResource SubText}"
+									TextWrapping="Wrap"
+									Margin="0,4,0,0"/>
+						</StackPanel>
+
+						<ComboBox x:Name="CbVolume"
+								  Grid.Column="1"
+								  Style="{StaticResource ModernComboBox}"
+								  VerticalAlignment="Center"
+								  SelectionChanged="CbVolume_SelectionChanged"/>
+					</Grid>
+
+					<Separator Background="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="260"/>
+						</Grid.ColumnDefinitions>
+
+						<StackPanel VerticalAlignment="Center">
+							<TextBlock Text="Pitch"
+									Foreground="{StaticResource TextPrimaryBrush}"
+									FontSize="13"/>
+							<TextBlock Text="Adjust the pitch of the selected voice"
+									Style="{StaticResource SubText}"
+									TextWrapping="Wrap"
+									Margin="0,4,0,0"/>
+						</StackPanel>
+
+						<ComboBox x:Name="CbPitch"
+								  Grid.Column="1"
+								  Style="{StaticResource ModernComboBox}"
+								  VerticalAlignment="Center"
+								  SelectionChanged="CbPitch_SelectionChanged"/>
+					</Grid>
+				</StackPanel>
+			</Border>
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

@@ -95,6 +95,7 @@ public class ConfigManager
         Config.BorderWidth       = Math.Clamp(Config.BorderWidth,       0, 10);
 
         Config.OverlayDisplayTime    = Math.Clamp(Config.OverlayDisplayTime,    1, 120);
+        Config.MaxRecordingSeconds   = Math.Clamp(Config.MaxRecordingSeconds,   1, AppSettings.DefaultMaxRecordingSeconds);
         Config.InitialSilenceTimeout = Math.Clamp(Config.InitialSilenceTimeout, 1.0, 30.0);
         Config.SilenceTimeout        = Math.Clamp(Config.SilenceTimeout,        0.05, 5.0);
 
@@ -109,5 +110,22 @@ public class ConfigManager
 
         if (!AppSettings.OverlayPositions.ContainsKey(Config.OverlayPosition))
             Config.OverlayPosition = AppSettings.DefaultOverlayPosition;
+
+        Config.TtsLanguage = string.IsNullOrWhiteSpace(Config.TtsLanguage)
+            ? AppSettings.DefaultTtsLanguage
+            : Config.TtsLanguage.Trim();
+        Config.TtsVoice = string.IsNullOrWhiteSpace(Config.TtsVoice)
+            ? AppSettings.DefaultTtsVoice
+            : Config.TtsVoice.Trim();
+        Config.TtsRate = string.IsNullOrWhiteSpace(Config.TtsRate)
+            ? AppSettings.DefaultTtsRate
+            : Config.TtsRate.Trim();
+        Config.TtsVolume = string.IsNullOrWhiteSpace(Config.TtsVolume)
+            ? AppSettings.DefaultTtsVolume
+            : Config.TtsVolume.Trim();
+        Config.TtsPitch = string.IsNullOrWhiteSpace(Config.TtsPitch)
+            ? AppSettings.DefaultTtsPitch
+            : Config.TtsPitch.Trim();
+        Config.TtsVoiceSelections ??= [];
     }
 }

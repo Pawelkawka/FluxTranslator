@@ -1,10 +1,14 @@
 <Window x:Class="FluxTranslator.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
         xmlns:tabs="clr-namespace:FluxTranslator.Tabs"
         Title="FluxTranslator"
         Icon="/Resources/icon.ico"
         Width="960" Height="780"
+    d:DesignWidth="960" d:DesignHeight="720"
         ResizeMode="CanMinimize"
         MinWidth="640" MinHeight="480"
         Background="{StaticResource BackgroundBrush}">
@@ -36,7 +40,7 @@
                              Style="{StaticResource SubTabButton}"
                              Checked="SubTab_Checked"/>
                 <RadioButton x:Name="SubTabBehavior"
-                             Content="Timing"
+                             Content="Behavior"
                              GroupName="SttTabs"
                              Tag="Behavior"
                              Style="{StaticResource SubTabButton}"
@@ -47,6 +51,12 @@
                              Tag="Hotkeys"
                              Style="{StaticResource SubTabButton}"
                              Checked="SubTab_Checked"/>
+                <RadioButton x:Name="SubTabTts"
+                             Content="Voice TTS"
+                             GroupName="SttTabs"
+                             Tag="Tts"
+                             Style="{StaticResource SubTabButton}"
+                             Checked="SubTab_Checked"/>
             </StackPanel>
         </Border>
 
@@ -55,6 +65,7 @@
             <tabs:AppearanceTab x:Name="TabAppearance" Visibility="Collapsed"/>
             <tabs:BehaviorTab   x:Name="TabBehavior"   Visibility="Collapsed"/>
             <tabs:HotkeysTab    x:Name="TabHotkeys"    Visibility="Collapsed"/>
+            <tabs:TtsTab        x:Name="TabTts"        Visibility="Collapsed"/>
         </Grid>
 
         <Border Grid.Row="2"

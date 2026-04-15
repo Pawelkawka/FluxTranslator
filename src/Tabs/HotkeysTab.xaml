@@ -1,6 +1,10 @@
 <UserControl x:Class="FluxTranslator.Tabs.HotkeysTab"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="960" d:DesignHeight="720">
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="28,16,28,24">
@@ -8,10 +12,6 @@
             <TextBlock Style="{StaticResource H1}" Text="Keyboard &amp; Mouse Shortcuts"/>
 
             <TextBlock Style="{StaticResource H2}" Text="Hotkey Configuration"/>
-
-            <TextBlock Style="{StaticResource SubText}" 
-                       Text="Supports keyboard combinations and mouse buttons (LButton, RButton, MButton, XButton1, XButton2)"
-                       Margin="0,0,0,12"/>
 
 
             <Border Style="{StaticResource SettingCard}">

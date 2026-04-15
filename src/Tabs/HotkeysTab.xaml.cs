@@ -35,7 +35,7 @@ public partial class HotkeysTab : UserControl
         var focusedElement = Keyboard.FocusedElement;
         if (focusedElement is not TextBox focusedTextBox) return;
 
-        string buttonName = e.ChangedButton switch
+        string? buttonName = e.ChangedButton switch
         {
             System.Windows.Input.MouseButton.Left => "LButton",
             System.Windows.Input.MouseButton.Right => "RButton",
@@ -167,63 +167,41 @@ public partial class HotkeysTab : UserControl
         return false;
     }
 
-    private void SaveTranslateHotkey(string newHotkey)
+    private void SaveHotkey(
+        string newHotkey,
+        string currentValue,
+        string previousValue,
+        TextBox textBox,
+        Action<string> persist,
+        string logLabel)
     {
         newHotkey = newHotkey.Trim();
         if (string.IsNullOrEmpty(newHotkey)) return;
 
-        if (HasConflict(newHotkey, _config.HotkeyTranslate))
+        if (HasConflict(newHotkey, currentValue))
         {
-            LblStatus.Text     = "⚠ Conflict: this hotkey is already used by another action.";
-            TbTransHotkey.Text = _prevTrans;
+            LblStatus.Text = "⚠ Conflict: this hotkey is already used by another action.";
+            textBox.Text   = previousValue;
             return;
         }
 
-        _config.HotkeyTranslate = newHotkey;
+        persist(newHotkey);
         _manager.Save();
         HotkeysChanged?.Invoke();
         LblStatus.Text = string.Empty;
-        AppLogger.Info($"Translation hotkey updated: {newHotkey}");
+        AppLogger.Info($"{logLabel} hotkey updated: {newHotkey}");
         Keyboard.ClearFocus();
     }
 
-    private void SaveCopyHotkey(string newHotkey)
-    {
-        newHotkey = newHotkey.Trim();
-        if (string.IsNullOrEmpty(newHotkey)) return;
+    private void SaveTranslateHotkey(string newHotkey) =>
+        SaveHotkey(newHotkey, _config.HotkeyTranslate, _prevTrans, TbTransHotkey,
+            v => _config.HotkeyTranslate = v, "Translation");
 
-        if (HasConflict(newHotkey, _config.HotkeyCopy))
-        {
-            LblStatus.Text    = "⚠ Conflict: this hotkey is already used by another action.";
-            TbCopyHotkey.Text = _prevCopy;
-            return;
-        }
+    private void SaveCopyHotkey(string newHotkey) =>
+        SaveHotkey(newHotkey, _config.HotkeyCopy, _prevCopy, TbCopyHotkey,
+            v => _config.HotkeyCopy = v, "Copy");
 
-        _config.HotkeyCopy = newHotkey;
-        _manager.Save();
-        HotkeysChanged?.Invoke();
-        LblStatus.Text = string.Empty;
-        AppLogger.Info($"Copy hotkey updated: {newHotkey}");
-        Keyboard.ClearFocus();
-    }
-
-    private void SaveKillHotkey(string newHotkey)
-    {
-        newHotkey = newHotkey.Trim();
-        if (string.IsNullOrEmpty(newHotkey)) return;
-
-        if (HasConflict(newHotkey, _config.HotkeyKillAll))
-        {
-            LblStatus.Text    = "⚠ Conflict: this hotkey is already used by another action.";
-            TbKillHotkey.Text = _prevKill;
-            return;
-        }
-
-        _config.HotkeyKillAll = newHotkey;
-        _manager.Save();
-        HotkeysChanged?.Invoke();
-        LblStatus.Text = string.Empty;
-        AppLogger.Info($"Kill hotkey updated: {newHotkey}");
-        Keyboard.ClearFocus();
-    }
+    private void SaveKillHotkey(string newHotkey) =>
+        SaveHotkey(newHotkey, _config.HotkeyKillAll, _prevKill, TbKillHotkey,
+            v => _config.HotkeyKillAll = v, "Kill");
 }

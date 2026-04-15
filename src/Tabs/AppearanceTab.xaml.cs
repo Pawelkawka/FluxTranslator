@@ -98,47 +98,36 @@ public partial class AppearanceTab : UserControl
         { _config.FontFamily = font; Save(); }
     }
 
-    private void SlFontSize_ValueChanged(object s, System.Windows.RoutedPropertyChangedEventArgs<double> e)
+    private void SaveSliderInt(Slider sl, TextBlock lbl, Action<int> setter)
     {
         if (_loading || _config is null) return;
-        _config.FontSize  = (int)SlFontSize.Value;
-        LblFontSize.Text  = _config.FontSize.ToString();
+        var value = (int)sl.Value;
+        setter(value);
+        lbl.Text = value.ToString();
         Save();
     }
+
+    private void SlFontSize_ValueChanged(object s, System.Windows.RoutedPropertyChangedEventArgs<double> e)
+        => SaveSliderInt(SlFontSize, LblFontSize, v => _config!.FontSize = v);
 
     private void ChkBold_Changed(object s, System.Windows.RoutedEventArgs e)
     {
         if (_loading || _config is null) return;
-        _config.FontBold = ChkBold.IsChecked == true; Save();
+        _config.FontBold = ChkBold.IsChecked == true;
+        Save();
     }
 
     private void SlBgOpacity_ValueChanged(object s, System.Windows.RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (_loading || _config is null) return;
-        _config.BackgroundOpacity = (int)SlBgOpacity.Value;
-        LblBgOpacity.Text = _config.BackgroundOpacity.ToString(); Save();
-    }
+        => SaveSliderInt(SlBgOpacity, LblBgOpacity, v => _config!.BackgroundOpacity = v);
 
     private void SlPadding_ValueChanged(object s, System.Windows.RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (_loading || _config is null) return;
-        _config.Padding  = (int)SlPadding.Value;
-        LblPadding.Text  = _config.Padding.ToString(); Save();
-    }
+        => SaveSliderInt(SlPadding, LblPadding, v => _config!.Padding = v);
 
     private void SlCorner_ValueChanged(object s, System.Windows.RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (_loading || _config is null) return;
-        _config.CornerRadius = (int)SlCorner.Value;
-        LblCorner.Text       = _config.CornerRadius.ToString(); Save();
-    }
+        => SaveSliderInt(SlCorner, LblCorner, v => _config!.CornerRadius = v);
 
     private void SlBorderWidth_ValueChanged(object s, System.Windows.RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (_loading || _config is null) return;
-        _config.BorderWidth  = (int)SlBorderWidth.Value;
-        LblBorderWidth.Text  = _config.BorderWidth.ToString(); Save();
-    }
+        => SaveSliderInt(SlBorderWidth, LblBorderWidth, v => _config!.BorderWidth = v);
 
 
 
