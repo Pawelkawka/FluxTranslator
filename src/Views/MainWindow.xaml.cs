@@ -39,6 +39,7 @@ public partial class MainWindow : Window
 
         _controller.StatusChanged    += OnStatusChanged;
         _controller.TranslationReady += _ => { };
+        _controller.BackendReady     += OnBackendReady;
 
         TabGeneral.Initialise   (_cfgManager.Config, _cfgManager, _controller);
         TabAppearance.Initialise(_cfgManager.Config, _cfgManager);
@@ -62,6 +63,14 @@ public partial class MainWindow : Window
 
         _hotkeys.Attach(this);
         RegisterHotkeys();
+    }
+
+    private async void OnBackendReady()
+    {
+        await Dispatcher.InvokeAsync(async () =>
+        {
+            await TabTts.RefreshLanguagesAsync();
+        });
     }
 
     private void OnClosed(object? sender, EventArgs e)

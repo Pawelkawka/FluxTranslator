@@ -9,6 +9,7 @@ public class AppController : IDisposable
 {
     public event Action<StatusEvent>? StatusChanged;
     public event Action<string>?      TranslationReady;
+    public event Action?              BackendReady;
 
     private readonly ConfigManager _configManager;
     private readonly SttBridgeClient _sttBridgeClient;
@@ -47,6 +48,7 @@ public class AppController : IDisposable
                 if (isReady)
                 {
                     AppLogger.Info("STT backend is ready.");
+                    BackendReady?.Invoke();
                     break;
                 }
             }

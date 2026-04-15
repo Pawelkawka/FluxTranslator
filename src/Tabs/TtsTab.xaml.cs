@@ -17,6 +17,7 @@ public partial class TtsTab : UserControl
     private AppController?  _controller;
     private bool            _loading;
     private bool            _devicesLoaded;
+    private bool            _languagesLoaded;
     private List<ComboBoxItem>? _cachedDevices;
 
     public event Action? TtsSettingsChanged;
@@ -47,6 +48,14 @@ public partial class TtsTab : UserControl
             return;
 
         _ = RefreshOutputDevicesAsync();
+    }
+
+    public async Task RefreshLanguagesAsync()
+    {
+        if (_languagesLoaded || _config is null)
+            return;
+
+        await LoadLanguagesAsync();
     }
 
     private async void LoadValues()
@@ -240,6 +249,13 @@ public partial class TtsTab : UserControl
             using var client = new SttBridgeClient(AppSettings.SttPort);
             cachedLanguages = await client.ListLanguagesAsync().ConfigureAwait(false);
 
+            // Check if we actually got languages
+            if (cachedLanguages is null || cachedLanguages.Length == 0)
+            {
+                AppLogger.Warn("No TTS languages available from backend.");
+                return false;
+            }
+
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 foreach (var language in cachedLanguages.OrderBy(l => l.Name))
@@ -258,10 +274,13 @@ public partial class TtsTab : UserControl
                     configChanged = true;
                 }
             });
+
+            _languagesLoaded = true;
         }
         catch (Exception ex)
         {
             AppLogger.Warn($"Could not load TTS languages: {ex.Message}");
+            _languagesLoaded = false;
         }
 
         configChanged |= await LoadVoicesForLanguageAsync(_config!.TtsLanguage, cachedLanguages);
