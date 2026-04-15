@@ -8,14 +8,27 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
    <img src="assets/demo.gif" alt="FluxTranslator" width="900">
 </p>
 
-<table align="center">
+<table align="center" width="100%">
    <tr>
-      <td><img src="assets/GeneralTab.png" alt="General tab" width="320"></td>
-      <td><img src="assets/AppearanceTab.png" alt="Appearance tab" width="320"></td>
+      <td align="center" style="width:50%;padding:8px;">
+         <img src="assets/GeneralTab.png" alt="General" style="max-width:100%;height:auto;border:1px solid #ddd;" />
+      </td>
+      <td align="center" style="width:50%;padding:8px;">
+         <img src="assets/AppearanceTab.png" alt="Appearance" style="max-width:100%;height:auto;border:1px solid #ddd;" />
+      </td>
    </tr>
    <tr>
-      <td><img src="assets/Behavior.png" alt="Behavior tab" width="320"></td>
-      <td><img src="assets/HotkeysTab.png" alt="Hotkeys tab" width="320"></td>
+      <td align="center" style="width:50%;padding:8px;">
+         <img src="assets/BehaviorTab.png" alt="Behavior tab" style="max-width:100%;height:auto;border:1px solid #ddd;" />
+      </td>
+      <td align="center" style="width:50%;padding:8px;">
+         <img src="assets/HotkeysTab.png" alt="Hotkeys" style="max-width:100%;height:auto;border:1px solid #ddd;" />
+      </td>
+   </tr>
+   <tr>
+      <td colspan="2" align="center" style="padding:8px;">
+         <img src="assets/VoiceTTSTab.png" alt="Voice TTS" style="max-width:720px;width:100%;height:auto;border:1px solid #ddd;" />
+      </td>
    </tr>
 </table>
 
