@@ -69,6 +69,7 @@ public partial class MainWindow : Window
     {
         await Dispatcher.InvokeAsync(async () =>
         {
+            await TabTts.RefreshOutputDevicesAsync();
             await TabTts.RefreshLanguagesAsync();
         });
     }
