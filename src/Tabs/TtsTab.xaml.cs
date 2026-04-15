@@ -42,12 +42,24 @@ public partial class TtsTab : UserControl
     {
         if (_config is null)
             return;
-
         // load devices at startup
-        if (_devicesLoaded)
+        if (!_devicesLoaded)
+        {
+            _ = RefreshOutputDevicesAsync();
             return;
+        }
 
-        _ = RefreshOutputDevicesAsync();
+        // cache devices
+        var prevLoading = _loading;
+        _loading = true;
+        try
+        {
+            SelectDeviceById(_config.TtsOutputDeviceId);
+        }
+        finally
+        {
+            _loading = prevLoading;
+        }
     }
 
     public async Task RefreshLanguagesAsync()
@@ -156,6 +168,21 @@ public partial class TtsTab : UserControl
             cb.Items.Add(new ComboBoxItem { Content = label, Tag = value });
     }
 
+    private void SelectDeviceById(string targetId)
+    {
+        int idx = 0;
+        foreach (ComboBoxItem item in CbOutputDevice.Items)
+        {
+            if (item.Tag is string id && id == targetId)
+            {
+                CbOutputDevice.SelectedIndex = idx;
+                return;
+            }
+            idx++;
+        }
+        CbOutputDevice.SelectedIndex = 0;
+    }
+
     private async Task LoadOutputDevicesAsync()
     {
         // If devices are already cached, use the cache
@@ -163,73 +190,54 @@ public partial class TtsTab : UserControl
         {
             CbOutputDevice.Items.Clear();
             foreach (var device in _cachedDevices)
-            {
                 CbOutputDevice.Items.Add(device);
-            }
 
-            // Select current device
-            string targetId = _config!.TtsOutputDeviceId;
-            int idx = 0;
-            foreach (ComboBoxItem item in CbOutputDevice.Items)
-            {
-                if (item.Tag is string id && id == targetId)
-                {
-                    CbOutputDevice.SelectedIndex = idx;
-                    break;
-                }
-                idx++;
-            }
-
+            SelectDeviceById(_config!.TtsOutputDeviceId);
             return;
         }
 
         CbOutputDevice.Items.Clear();
+        CbOutputDevice.Items.Add(new ComboBoxItem { Content = "System Default", Tag = "" });
 
-        CbOutputDevice.Items.Add(new ComboBoxItem
+        try
         {
-            Content = "System Default",
-            Tag = ""
-        });
+            // Load devices from the Python backend so we get sounddevice indices,
+            // not Windows MMDevice GUIDs which sounddevice can't resolve.
+            using var client = new SttBridgeClient(AppSettings.SttPort);
+            var devices = await client.ListDevicesAsync();
 
-        var devices = AudioDeviceHelper.GetOutputDevices();
-
-        foreach (var device in devices)
-        {
-            var label = device.IsDefault ? $"{device.Name} (Default)" : device.Name;
-            CbOutputDevice.Items.Add(new ComboBoxItem
+            foreach (var device in devices)
             {
-                Content = label,
-                Tag = device.Id
-            });
-        }
-
-        // Cache the devices list
-        _cachedDevices = CbOutputDevice.Items.Cast<ComboBoxItem>().ToList();
-        _devicesLoaded = true;
-
-        // Select current device
-        string targetId2 = _config!.TtsOutputDeviceId;
-        int idx2 = 0;
-        foreach (ComboBoxItem item in CbOutputDevice.Items)
-        {
-            if (item.Tag is string id && id == targetId2)
-            {
-                CbOutputDevice.SelectedIndex = idx2;
-                break;
+                var label = device.IsDefault ? $"{device.Name} (Default)" : device.Name;
+                CbOutputDevice.Items.Add(new ComboBoxItem
+                {
+                    Content = label,
+                    Tag = device.Name,   // use name — Python resolves to index at playback time
+                });
             }
-            idx2++;
+
+            // Cache only on success so a failed attempt retries next time
+            _cachedDevices = CbOutputDevice.Items.Cast<ComboBoxItem>().ToList();
+            _devicesLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Warn($"Could not load TTS output devices from backend: {ex.Message}");
+            // _devicesLoaded stays false — will retry when backend is ready
         }
 
-        await Task.CompletedTask;
+        SelectDeviceById(_config!.TtsOutputDeviceId);
     }
 
-    private async Task RefreshOutputDevicesAsync()
+    public async Task RefreshOutputDevicesAsync()
     {
         var wasLoading = _loading;
         _loading = true;
 
         try
         {
+            _cachedDevices = null;
+            _devicesLoaded = false;
             await LoadOutputDevicesAsync();
         }
         finally

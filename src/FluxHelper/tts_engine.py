@@ -129,13 +129,24 @@ def list_output_devices() -> list[dict]:
 # ── Audio conversion & playback ─────────────────────────────────────
 
 
-def _decode_mp3_to_wav(mp3_path: str, wav_path: str) -> tuple[np.ndarray, int]:
+def _get_device_sample_rate(device_id: Optional[int]) -> int:
+    if device_id is None:
+        return TTS_SAMPLE_RATE
+    try:
+        info = sd.query_devices(device_id, "output")
+        rate = int(info.get("default_samplerate", TTS_SAMPLE_RATE))
+        return rate if rate > 0 else TTS_SAMPLE_RATE
+    except Exception:
+        return TTS_SAMPLE_RATE
+
+
+def _decode_mp3_to_wav(mp3_path: str, wav_path: str, target_rate: int = TTS_SAMPLE_RATE) -> tuple[np.ndarray, int]:
     try:
         result = subprocess.run(
             [
                 "ffmpeg",
                 "-i", mp3_path,
-                "-ar", str(TTS_SAMPLE_RATE),
+                "-ar", str(target_rate),
                 "-ac", "1",
                 "-sample_fmt", "s16",
                 "-y",
@@ -153,7 +164,7 @@ def _decode_mp3_to_wav(mp3_path: str, wav_path: str) -> tuple[np.ndarray, int]:
         with wave.open(wav_path, "rb") as wf:
             assert wf.getnchannels() == 1, f"Expected mono, got {wf.getnchannels()} channels"
             assert wf.getsampwidth() == 2, f"Expected 16-bit, got {wf.getsampwidth() * 8}-bit"
-            assert wf.getframerate() == TTS_SAMPLE_RATE, f"Expected {TTS_SAMPLE_RATE}Hz, got {wf.getframerate()}Hz"
+            assert wf.getframerate() == target_rate, f"Expected {target_rate}Hz, got {wf.getframerate()}Hz"
 
             raw_data = wf.readframes(wf.getnframes())
             samples = np.frombuffer(raw_data, dtype=np.int16).astype(np.float32) / 32768.0
@@ -217,6 +228,9 @@ def _synthesize_and_play(
         rate=rate, volume=volume, pitch=pitch,
     )
 
+    device_rate = _get_device_sample_rate(resolved_device_id)
+    log.info("Using sample rate %d Hz for device %s", device_rate, resolved_device_id)
+
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
         tmp_mp3 = tmp.name
     tmp_wav = tmp_mp3.replace(".mp3", ".wav")
@@ -237,7 +251,7 @@ def _synthesize_and_play(
             log.info("TTS cancelled before playback")
             return
 
-        samples, sample_rate = _decode_mp3_to_wav(tmp_mp3, tmp_wav)
+        samples, sample_rate = _decode_mp3_to_wav(tmp_mp3, tmp_wav, device_rate)
         if stop_event.is_set() or len(samples) == 0:
             return
 
@@ -284,7 +298,19 @@ def _speak_text(
             return
         except Exception as exc:
             last_error = exc
-            log.warning("TTS failed with voice %s: %s", attempt_voice, exc)
+            log.warning("TTS failed with voice %s on device %s: %s", attempt_voice, resolved_device_id, exc)
+
+    if last_error and resolved_device_id is not None:
+        log.warning(
+            "All attempts failed on device %d, retrying on system default device",
+            resolved_device_id,
+        )
+        try:
+            _synthesize_and_play(text, voice, None, rate, volume, pitch, stop_event)
+            return
+        except Exception as exc:
+            log.error("TTS failed even on default device: %s", exc, exc_info=True)
+            return
 
     if last_error:
         log.error("TTS failed after trying all voices: %s", last_error, exc_info=True)
