@@ -62,8 +62,6 @@ public partial class MainWindow : Window
 
         _hotkeys.Attach(this);
         RegisterHotkeys();
-
-        await _controller.StartBackendAsync();
     }
 
     private void OnClosed(object? sender, EventArgs e)
