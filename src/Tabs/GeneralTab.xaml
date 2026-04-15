@@ -159,13 +159,15 @@
 							<StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0" VerticalAlignment="Center">
 								<Button x:Name="BtnBrowseModelsDir"
 										Content="Browse"
-										Style="{StaticResource GhostButton}"
+										Style="{StaticResource ModernButton}"
+										Padding="12,5"
 										Margin="0,0,0,4"
 										Click="BtnBrowseModelsDir_Click"/>
 
 								<Button x:Name="BtnOpenModelsDir"
 										Content="Open Folder"
-										Style="{StaticResource GhostButton}"
+										Style="{StaticResource ModernButton}"
+										Padding="12,5"
 										Click="BtnOpenModelsDir_Click"/>
 							</StackPanel>
 						</Grid>
@@ -191,7 +193,8 @@
 								<Button x:Name="BtnRefreshModels"
 										Grid.Column="1"
 										Content="↺  Refresh"
-										Style="{StaticResource GhostButton}"
+										Style="{StaticResource ModernButton}"
+										Padding="12,5"
 										Width="{Binding ActualWidth, ElementName=BtnOpenModelsDir}"
 										Click="BtnRefreshModels_Click"/>
 							</Grid>
