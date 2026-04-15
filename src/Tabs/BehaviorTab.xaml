@@ -59,7 +59,7 @@
                             <TextBlock Text="Max Recording Time"
                                        Foreground="{StaticResource TextPrimaryBrush}"
                                        FontSize="13"/>
-                            <TextBlock Text="Safety limit for one recording session before STT stops automatically"
+                            <TextBlock Text="Set limit for recording session"
                                        Style="{StaticResource SubText}"
                                        Margin="0,4,0,0"
                                        TextWrapping="Wrap"/>

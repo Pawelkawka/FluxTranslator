@@ -16,6 +16,9 @@ public partial class TtsTab : UserControl
     private ConfigManager?  _manager;
     private AppController?  _controller;
     private bool            _loading;
+    private bool            _devicesLoaded;
+    private bool            _languagesLoaded;
+    private List<ComboBoxItem>? _cachedDevices;
 
     public event Action? TtsSettingsChanged;
 
@@ -40,7 +43,19 @@ public partial class TtsTab : UserControl
         if (_config is null)
             return;
 
+        // load devices at startup
+        if (_devicesLoaded)
+            return;
+
         _ = RefreshOutputDevicesAsync();
+    }
+
+    public async Task RefreshLanguagesAsync()
+    {
+        if (_languagesLoaded || _config is null)
+            return;
+
+        await LoadLanguagesAsync();
     }
 
     private async void LoadValues()
@@ -143,6 +158,31 @@ public partial class TtsTab : UserControl
 
     private async Task LoadOutputDevicesAsync()
     {
+        // If devices are already cached, use the cache
+        if (_cachedDevices is not null)
+        {
+            CbOutputDevice.Items.Clear();
+            foreach (var device in _cachedDevices)
+            {
+                CbOutputDevice.Items.Add(device);
+            }
+
+            // Select current device
+            string targetId = _config!.TtsOutputDeviceId;
+            int idx = 0;
+            foreach (ComboBoxItem item in CbOutputDevice.Items)
+            {
+                if (item.Tag is string id && id == targetId)
+                {
+                    CbOutputDevice.SelectedIndex = idx;
+                    break;
+                }
+                idx++;
+            }
+
+            return;
+        }
+
         CbOutputDevice.Items.Clear();
 
         CbOutputDevice.Items.Add(new ComboBoxItem
@@ -163,17 +203,21 @@ public partial class TtsTab : UserControl
             });
         }
 
+        // Cache the devices list
+        _cachedDevices = CbOutputDevice.Items.Cast<ComboBoxItem>().ToList();
+        _devicesLoaded = true;
+
         // Select current device
-        string targetId = _config!.TtsOutputDeviceId;
-        int idx = 0;
+        string targetId2 = _config!.TtsOutputDeviceId;
+        int idx2 = 0;
         foreach (ComboBoxItem item in CbOutputDevice.Items)
         {
-            if (item.Tag is string id && id == targetId)
+            if (item.Tag is string id && id == targetId2)
             {
-                CbOutputDevice.SelectedIndex = idx;
+                CbOutputDevice.SelectedIndex = idx2;
                 break;
             }
-            idx++;
+            idx2++;
         }
 
         await Task.CompletedTask;
@@ -205,6 +249,13 @@ public partial class TtsTab : UserControl
             using var client = new SttBridgeClient(AppSettings.SttPort);
             cachedLanguages = await client.ListLanguagesAsync().ConfigureAwait(false);
 
+            // Check if we actually got languages
+            if (cachedLanguages is null || cachedLanguages.Length == 0)
+            {
+                AppLogger.Warn("No TTS languages available from backend.");
+                return false;
+            }
+
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 foreach (var language in cachedLanguages.OrderBy(l => l.Name))
@@ -223,10 +274,13 @@ public partial class TtsTab : UserControl
                     configChanged = true;
                 }
             });
+
+            _languagesLoaded = true;
         }
         catch (Exception ex)
         {
             AppLogger.Warn($"Could not load TTS languages: {ex.Message}");
+            _languagesLoaded = false;
         }
 
         configChanged |= await LoadVoicesForLanguageAsync(_config!.TtsLanguage, cachedLanguages);

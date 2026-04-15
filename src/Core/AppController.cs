@@ -9,13 +9,12 @@ public class AppController : IDisposable
 {
     public event Action<StatusEvent>? StatusChanged;
     public event Action<string>?      TranslationReady;
+    public event Action?              BackendReady;
 
     private readonly ConfigManager _configManager;
     private readonly SttBridgeClient _sttBridgeClient;
     private readonly TranslationService _translationService;
     private readonly TtsController _ttsController;
-
-    private Process? _backendProcess;
 
     private bool   _isListening;
     private string _lastSttState = "idle";
@@ -32,105 +31,34 @@ public class AppController : IDisposable
         _sttBridgeClient = new SttBridgeClient(AppSettings.SttPort);
         _translationService = new TranslationService();
         _ttsController = new TtsController(cfg);
-        
+
         TranslationReady += OnTranslationReady;
+        
+        // Start backend health monitoring
+        _ = MonitorBackendHealthAsync();
     }
 
-    public async Task StartBackendAsync()
+    private async Task MonitorBackendHealthAsync()
     {
-        if (!TryCreateBackendStartInfo(out var processStartInfo, out var backendLabel))
+        while (true)
         {
-            AppLogger.Warn("Backend not found: no FluxHelper executable or Python entry script present.");
-            return;
-        }
-
-        AppLogger.Info($"Starting STT backend on port {AppSettings.SttPort} using {backendLabel}…");
-        if (!StartBackendProcess(processStartInfo))
-            return;
-
-        bool ready = await _sttBridgeClient.WaitUntilReadyAsync(12000);
-        if (ready)
-            AppLogger.Info("STT backend is ready.");
-        else
-            AppLogger.Warn("STT backend did not become ready in time – continuing anyway.");
-    }
-
-    private bool TryCreateBackendStartInfo(out ProcessStartInfo processStartInfo, out string backendLabel)
-    {
-        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        var executableCandidates = new[]
-        {
-            Path.Combine(baseDir, "FluxHelper.exe"),
-            Path.Combine(baseDir, "backend", "FluxHelper.exe"),
-        };
-
-        var scriptCandidates = new[]
-        {
-            Path.Combine(baseDir, "backend", "fluxhelper.py"),
-            Path.Combine(baseDir, "FluxHelper", "fluxhelper.py"),
-            Path.Combine(baseDir, "backend", "stt_server.py"),
-        };
-
-        var executablePath = executableCandidates.FirstOrDefault(File.Exists);
-        if (executablePath is not null)
-        {
-            processStartInfo = new ProcessStartInfo
+            try
             {
-                FileName = executablePath,
-                Arguments = AppSettings.SttPort.ToString(),
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            };
-
-            backendLabel = Path.GetFileName(executablePath);
-            return true;
-        }
-
-        var scriptPath = scriptCandidates.FirstOrDefault(File.Exists);
-        if (scriptPath is not null)
-        {
-            processStartInfo = new ProcessStartInfo
+                var isReady = await _sttBridgeClient.WaitUntilReadyAsync(2000);
+                if (isReady)
+                {
+                    AppLogger.Info("STT backend is ready.");
+                    BackendReady?.Invoke();
+                    break;
+                }
+            }
+            catch
             {
-                FileName = "python",
-                Arguments = $"\"{scriptPath}\" {AppSettings.SttPort}",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            };
-
-            backendLabel = Path.GetFileName(scriptPath);
-            return true;
-        }
-
-        processStartInfo = new ProcessStartInfo();
-        backendLabel = string.Empty;
-        return false;
-    }
-
-    private bool StartBackendProcess(ProcessStartInfo processStartInfo)
-    {
-        try
-        {
-            _backendProcess = Process.Start(processStartInfo);
-            if (_backendProcess is null)
-            {
-                AppLogger.Error("Could not start STT backend process.");
-                return false;
+                // Backend not available yet, continue monitoring
             }
 
-            _backendProcess.OutputDataReceived += (_, e) => { if (e.Data != null) AppLogger.Debug($"[Backend] {e.Data}"); };
-            _backendProcess.ErrorDataReceived += (_, e) => { if (e.Data != null) AppLogger.Warn($"[Backend] {e.Data}"); };
-            _backendProcess.BeginOutputReadLine();
-            _backendProcess.BeginErrorReadLine();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            AppLogger.Error($"Could not start STT backend: {ex.Message}");
-            return false;
+            AppLogger.Debug("Waiting for STT backend to become available...");
+            await Task.Delay(5000);
         }
     }
 
@@ -359,16 +287,6 @@ public class AppController : IDisposable
     {
         _pollCts?.Cancel();
         _pollCts?.Dispose();
-        try
-        {
-            if (_backendProcess is { HasExited: false })
-            {
-                _backendProcess.Kill(entireProcessTree: true);
-                _backendProcess.WaitForExit(3000);
-            }
-        }
-        catch { }
-        _backendProcess?.Dispose();
         _sttBridgeClient.Dispose();
         _translationService.Dispose();
         _ttsController.Dispose();
