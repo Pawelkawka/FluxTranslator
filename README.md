@@ -2,7 +2,7 @@
    <h1>FluxTranslator</h1>
 </div>
 
-FluxTranslator is a Windows desktop overlay for speech to text translation. It listens to your microphone, recognises speech, translates it in real time and displays the result in a compact on screen overlay. Supports Voice TTS, translated audio can be routed to microphone via VB‑Cable so other apps can receive the translated speech as mic input.
+FluxTranslator is a Windows desktop overlay for speech to text translation. It listens to your microphone, recognises speech, translates it in real time and displays the result in a compact on screen overlay. Supports Voice TTS, translated audio can be routed to microphone via VBCable so other apps can receive the translated speech as mic input.
 
 <p align="center">
    <img src="assets/demo.gif" alt="FluxTranslator" width="900">
@@ -33,7 +33,7 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
 
 ## Installation
 
-### Prerequisites
+### Requirements
 - .NET 8 SDK or later
 - Windows 11 / 10
 - Python 3.14
@@ -125,3 +125,4 @@ FluxTranslator includes support for common source and target languages (ISO 639-
 
 - Developed by Pawel Kawka.
 - Open source and free to use.
+- Voice TTS is implemented using [edge-tts](https://github.com/rany2/edge-tts)
