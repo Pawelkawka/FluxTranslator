@@ -68,7 +68,7 @@ Building locally ensures the exe has a unique binary signature.
 
 You can customize the output directory:
 ```powershell
-.\build.ps1 -OutputDir "set path" 
+-OutputDir "set path" 
 ```
 
 > [!IMPORTANT]
