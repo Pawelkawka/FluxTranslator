@@ -23,7 +23,7 @@
 
 # 4. Change the audio input so that Voice TTS is heard in games and applications as a microphone.
 - In the applications microphone settings select: `Voicemeeter Out B1 (VB‑Audio Voicemeeter VAIO)`
-- If you want Voicemeeter to be used by default in every application go to the sound settings and set `CABLE Output (VB‑Audio Virtual Cable)` as the default device and the default communication device. 
+- If you want Voicemeeter to be used by default in every application go to the sound settings and set `Voicemeeter Out B1 (VB‑Audio Voicemeeter VAIO)` as the default device and the default communication device. 
 
 > [!IMPORTANT]
 > When using Voicemeeter as the default device it is recommended to enable “Run on Windows Startup” 
