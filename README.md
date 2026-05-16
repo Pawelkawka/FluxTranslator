@@ -11,7 +11,7 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
 <table align="center" width="100%">
    <tr>
       <td align="center" style="width:50%;padding:8px;">
-         <img src="assets/GeneralTab.png" alt="General" style="max-width:100%;height:auto;border:1px solid #ddd;" />
+         <img src="assets/VoiceTTSTab.png" alt="General" style="max-width:100%;height:auto;border:1px solid #ddd;" />
       </td>
       <td align="center" style="width:50%;padding:8px;">
          <img src="assets/AppearanceTab.png" alt="Appearance" style="max-width:100%;height:auto;border:1px solid #ddd;" />
@@ -27,7 +27,7 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
    </tr>
    <tr>
       <td colspan="2" align="center" style="padding:8px;">
-         <img src="assets/VoiceTTSTab.png" alt="Voice TTS" style="max-width:720px;width:100%;height:auto;border:1px solid #ddd;" />
+         <img src="assets/GeneralTab.png" alt="Voice TTS" style="max-width:720px;width:100%;height:auto;border:1px solid #ddd;" />
       </td>
    </tr>
 </table>
@@ -72,7 +72,7 @@ You can customize the output directory:
 ```
 
 > [!IMPORTANT]
-> For FluxTranslator to work correctly first run `fluxhelper.py` then run `FluxHelper.exe`
+> For FluxTranslator to work correctly first run `fluxhelper.py` then run `FluxTranslator.exe`
 
 ## Voice TTS
 
