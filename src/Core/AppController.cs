@@ -13,6 +13,7 @@ public class AppController : IDisposable
 
     private readonly ConfigManager _configManager;
     private readonly SttBridgeClient _sttBridgeClient;
+    private readonly SttBridgeClient _ttsBridgeClient;
     private readonly TranslationService _translationService;
     private readonly TtsController _ttsController;
 
@@ -29,11 +30,12 @@ public class AppController : IDisposable
     {
         _configManager = cfg;
         _sttBridgeClient = new SttBridgeClient(AppSettings.SttPort);
+        _ttsBridgeClient = new SttBridgeClient(AppSettings.SttPort, TimeSpan.FromSeconds(60));
         _translationService = new TranslationService();
-        _ttsController = new TtsController(cfg);
+        _ttsController = new TtsController(cfg, _ttsBridgeClient);
 
-        TranslationReady += OnTranslationReady;
-        
+        TranslationReady += translation => _ = OnTranslationReadyAsync(translation);
+
         // Start backend health monitoring
         _ = MonitorBackendHealthAsync();
     }
@@ -227,7 +229,7 @@ public class AppController : IDisposable
         if (ok) TranslationReady?.Invoke(result);
     }
 
-    private async void OnTranslationReady(string translation)
+    private async Task OnTranslationReadyAsync(string translation)
     {
         try
         {
@@ -288,6 +290,7 @@ public class AppController : IDisposable
         _pollCts?.Cancel();
         _pollCts?.Dispose();
         _sttBridgeClient.Dispose();
+        _ttsBridgeClient.Dispose();
         _translationService.Dispose();
         _ttsController.Dispose();
     }

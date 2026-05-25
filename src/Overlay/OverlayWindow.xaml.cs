@@ -27,6 +27,8 @@ public partial class OverlayWindow : Window
 
         Loaded += OnLoaded;
         ApplyStyle();
+        MinWidth  = 250;
+        MinHeight = 40;
         Hide();
     }
 
@@ -44,9 +46,12 @@ public partial class OverlayWindow : Window
     public void ShowText(string text, bool isError, bool isFinal, int durationMs = 0)
     {
         if (string.IsNullOrEmpty(text)) { HideOverlay(); return; }
+        if (Dispatcher.HasShutdownStarted) return;
 
         Dispatcher.BeginInvoke(() =>
         {
+            if (Dispatcher.HasShutdownStarted) return;
+
             DisplayText.Text = text;
             DisplayText.Foreground = new SolidColorBrush(
                 isError
@@ -57,12 +62,11 @@ public partial class OverlayWindow : Window
 
             if (!IsVisible)
             {
-                Left = -32000;
-                Top  = -32000;
+                PositionWindow(MinWidth, MinHeight);
                 Show();
             }
-            Dispatcher.BeginInvoke(PositionWindow,
-                System.Windows.Threading.DispatcherPriority.Render);
+            UpdateLayout();
+            PositionWindow();
 
             if (isFinal)
             {
@@ -75,8 +79,12 @@ public partial class OverlayWindow : Window
 
     public void HideOverlay()
     {
+        if (Dispatcher.HasShutdownStarted) return;
+
         Dispatcher.BeginInvoke(() =>
         {
+            if (Dispatcher.HasShutdownStarted) return;
+
             _hideTimer.Stop();
             Hide();
             DisplayText.Text = string.Empty;
@@ -120,12 +128,11 @@ public partial class OverlayWindow : Window
         SetWindowLong(handle, GWL_EXSTYLE, ex | WS_EX_TRANSPARENT | WS_EX_LAYERED);
     }
 
-    private void PositionWindow()
+    private void PositionWindow(double? width = null, double? height = null)
     {
-        UpdateLayout();
-        var screen  = SystemParameters.WorkArea;
-        double w    = ActualWidth  > 0 ? ActualWidth  : MinWidth;
-        double h    = ActualHeight > 0 ? ActualHeight : MinHeight;
+        var screen = SystemParameters.WorkArea;
+        double w = width ?? (ActualWidth  > 0 ? ActualWidth  : MinWidth);
+        double h = height ?? (ActualHeight > 0 ? ActualHeight : MinHeight);
         const int margin = 20;
 
         (Left, Top) = _config.OverlayPosition switch

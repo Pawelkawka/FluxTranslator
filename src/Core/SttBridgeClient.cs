@@ -25,10 +25,10 @@ public class SttBridgeClient : IDisposable
     private readonly HttpClient _http;
     private readonly string     _baseUrl;
 
-    public SttBridgeClient(int port = AppSettings.SttPort)
+    public SttBridgeClient(int port = AppSettings.SttPort, TimeSpan? timeout = null)
     {
         _baseUrl = $"http://127.0.0.1:{port}";
-        _http    = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        _http    = new HttpClient { Timeout = timeout ?? TimeSpan.FromSeconds(10) };
     }
 
     public async Task<bool> StartAsync(

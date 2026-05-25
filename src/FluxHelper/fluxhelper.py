@@ -85,7 +85,7 @@ def start():
     )
 
     state.request_stop()
-    time.sleep(0.05)
+    time.sleep(0.01)
     state.reset_stop_signal()
 
     session_id = state.begin_new_session()
