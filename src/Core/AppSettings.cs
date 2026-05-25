@@ -10,8 +10,8 @@ public static class AppSettings
 {
     public const string AppName         = "FluxTranslator";
     public const string AppPublisher    = "PawelKawka";
-    public const string AppBaseVersion  = "1.3.3";
-    public const string AppBuild        = "2404202601";
+    public const string AppBaseVersion  = "1.4.0";
+    public const string AppBuild        = "2505202601";
     public const string AppVersion      = AppBaseVersion + "." + AppBuild;
     public const int    SttPort         = 5001;
 
