@@ -26,6 +26,18 @@
                 </Grid>
             </Border>
 
+            <TextBlock Style="{StaticResource H2}" Text="Monitor"/>
+            <Border Style="{StaticResource SettingCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="180"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="Display on monitor" Foreground="{StaticResource TextPrimaryBrush}"
+                               FontSize="13" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="CbMonitor" Grid.Column="1"
+                              Style="{StaticResource ModernComboBox}"
+                              SelectionChanged="CbMonitor_SelectionChanged"/>
+                </Grid>
+            </Border>
+
             <TextBlock Style="{StaticResource H2}" Text="Text"/>
             <Border Style="{StaticResource SettingCard}">
                 <StackPanel>

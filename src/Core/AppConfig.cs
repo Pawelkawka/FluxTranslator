@@ -15,6 +15,7 @@ public class AppConfig
     public string           TargetLanguage    { get; set; } = AppSettings.DefaultTargetLanguage;
 
     public string OverlayPosition { get; set; } = AppSettings.DefaultOverlayPosition;
+    public string OverlayMonitor  { get; set; } = AppSettings.DefaultOverlayMonitor;
 
     public int    FontSize          { get; set; } = AppSettings.DefaultFontSize;
     public string TextColor         { get; set; } = AppSettings.DefaultTextColor;

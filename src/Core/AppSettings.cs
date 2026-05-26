@@ -43,6 +43,7 @@ public static class AppSettings
     public const string DefaultSourceLanguage  = "pl-PL";
     public const string DefaultTargetLanguage  = "en";
     public const string DefaultOverlayPosition = "top_center";
+    public const string DefaultOverlayMonitor  = "all";
 
     // tts defaults
     public const bool   DefaultTtsEnabled        = false;
