@@ -11,10 +11,10 @@ public class TtsController : IDisposable
     private readonly SemaphoreSlim _speakLock = new(1, 1);
     private bool _disposed;
 
-    public TtsController(ConfigManager configManager)
+    public TtsController(ConfigManager configManager, SttBridgeClient sttBridgeClient)
     {
         _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
-        _sttBridgeClient = new SttBridgeClient(AppSettings.SttPort);
+        _sttBridgeClient = sttBridgeClient ?? throw new ArgumentNullException(nameof(sttBridgeClient));
     }
 
     public async Task SpeakAsync(string text, CancellationToken ct = default)
@@ -109,11 +109,9 @@ public class TtsController : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         _disposed = true;
         _speakLock.Dispose();
-        _sttBridgeClient.Dispose();
-        
         AppLogger.Info("TTS controller disposed.");
     }
 }

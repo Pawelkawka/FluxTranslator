@@ -13,6 +13,7 @@ public sealed class HotkeyManager : IDisposable
     [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(IntPtr hhk);
     [DllImport("user32.dll")] private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
     [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+    [DllImport("kernel32.dll", CharSet = CharSet.Auto)] private static extern IntPtr GetModuleHandle(string? lpModuleName);
 
     private delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -213,7 +214,7 @@ public sealed class HotkeyManager : IDisposable
         if (_mouseHook != IntPtr.Zero) return;
 
         _mouseHookProc = MouseHookCallback;
-        _mouseHook = SetWindowsHookEx(WH_MOUSE_LL, _mouseHookProc, IntPtr.Zero, 0);
+        _mouseHook = SetWindowsHookEx(WH_MOUSE_LL, _mouseHookProc, GetModuleHandle(null), 0);
 
         if (_mouseHook == IntPtr.Zero)
         {

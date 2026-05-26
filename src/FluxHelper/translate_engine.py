@@ -129,7 +129,6 @@ def _load(model_path: Path):
         if _cache:
             log.info("Evicting cached model to free memory.")
             _cache.clear()
-            gc.collect()
 
         if not model_path.exists() or not (model_path / "model.bin").exists():
             raise RuntimeError(f"Model not found at {model_path}")

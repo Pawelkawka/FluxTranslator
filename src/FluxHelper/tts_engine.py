@@ -35,11 +35,16 @@ def _resolve_device_id(device_id) -> Optional[int]:
         except ValueError:
             pass
 
-        target = device_id.strip()
+        target = device_id.strip().lower()
         try:
-            for idx, dev in enumerate(sd.query_devices()):
-                dev_name = dev.get("name", "")
-                if target in dev_name or dev_name in target:
+            devices = sd.query_devices()
+            for idx, dev in enumerate(devices):
+                dev_name = dev.get("name", "").strip().lower()
+                if target == dev_name:
+                    return idx
+            for idx, dev in enumerate(devices):
+                dev_name = dev.get("name", "").strip().lower()
+                if target in dev_name:
                     return idx
         except Exception as exc:
             log.warning("Failed to query devices for ID resolution: %s", exc)

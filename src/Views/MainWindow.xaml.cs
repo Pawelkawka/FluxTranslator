@@ -18,12 +18,13 @@ public partial class MainWindow : Window
     private readonly ConfigManager  _cfgManager;
     private readonly AppController  _controller;
     private readonly HotkeyManager  _hotkeys;
-    private readonly OverlayWindow  _overlay;
+    private readonly List<OverlayWindow> _overlays = new();
 
     private int  _hkTranslateId = -1;
     private int  _hkCopyId      = -1;
     private int  _hkKillId      = -1;
     private bool _exitRequested;
+    private string _lastMonitor = "";
 
     public MainWindow()
     {
@@ -35,8 +36,6 @@ public partial class MainWindow : Window
 
         InitializeComponent();
 
-        _overlay = new OverlayWindow(_cfgManager.Config);
-
         _controller.StatusChanged    += OnStatusChanged;
         _controller.TranslationReady += _ => { };
         _controller.BackendReady     += OnBackendReady;
@@ -47,7 +46,22 @@ public partial class MainWindow : Window
         TabHotkeys.Initialise   (_cfgManager.Config, _cfgManager);
         TabTts.Initialise       (_cfgManager.Config, _cfgManager, _controller);
 
-        TabAppearance.ConfigChanged += () => _overlay.UpdateConfig(_cfgManager.Config);
+        _lastMonitor = _cfgManager.Config.OverlayMonitor;
+        RebuildOverlays();
+
+        TabAppearance.ConfigChanged += () =>
+        {
+            if (_cfgManager.Config.OverlayMonitor != _lastMonitor)
+            {
+                _lastMonitor = _cfgManager.Config.OverlayMonitor;
+                RebuildOverlays();
+            }
+            else
+            {
+                foreach (var ov in _overlays)
+                    ov.UpdateConfig(_cfgManager.Config);
+            }
+        };
         TabHotkeys.HotkeysChanged   += RegisterHotkeys;
         TabTts.TtsSettingsChanged   += () => { };
 
@@ -55,6 +69,46 @@ public partial class MainWindow : Window
 
         Loaded += OnLoaded;
         Closed += OnClosed;
+    }
+
+    private void RebuildOverlays()
+    {
+        foreach (var old in _overlays)
+        {
+            try { old.Close(); } catch {}
+        }
+        _overlays.Clear();
+
+        var screens = System.Windows.Forms.Screen.AllScreens;
+        string monitor = _cfgManager.Config.OverlayMonitor;
+
+        if (monitor.Equals("all", StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (var screen in screens)
+            {
+                var ov = new OverlayWindow(_cfgManager.Config, screen);
+                _overlays.Add(ov);
+            }
+        }
+        else
+        {
+            System.Windows.Forms.Screen? target = null;
+            if (int.TryParse(monitor, out int idx) && idx >= 0 && idx < screens.Length)
+            {
+                target = screens[idx];
+            }
+            else
+            {
+                target = screens.FirstOrDefault();
+            }
+
+            if (target is not null)
+            {
+                var ov = new OverlayWindow(_cfgManager.Config, target);
+                _overlays.Add(ov);
+            }
+        }
+
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -77,7 +131,11 @@ public partial class MainWindow : Window
     private void OnClosed(object? sender, EventArgs e)
     {
         _hotkeys.Dispose();
-        _overlay.Close();
+        foreach (var ov in _overlays)
+        {
+            try { ov.Close(); } catch {}
+        }
+        _overlays.Clear();
         _controller.Dispose();
         AppLogger.Info("Application closed.");
         AppLogger.Close();
@@ -131,7 +189,14 @@ public partial class MainWindow : Window
 
         _hkKillId = _hotkeys.Register(
             _cfgManager.Config.HotkeyKillAll,
-            () => { if (!TabHotkeys.IsAnyHotkeyFocused) { _ = _controller.StopAllAsync(); _overlay.HideOverlay(); } });
+            () =>
+            {
+                if (!TabHotkeys.IsAnyHotkeyFocused)
+                {
+                    _ = _controller.StopAllAsync();
+                    foreach (var ov in _overlays) ov.HideOverlay();
+                }
+            });
 
         AppLogger.Info($"Hotkeys: {_cfgManager.Config.HotkeyTranslate} / {_cfgManager.Config.HotkeyCopy} / {_cfgManager.Config.HotkeyKillAll}");
     }
@@ -139,7 +204,10 @@ public partial class MainWindow : Window
     private void OnStatusChanged(StatusEvent ev)
     {
         Dispatcher.Invoke(() =>
-            _overlay.ShowText(ev.Text, ev.IsError, ev.IsFinal, ev.DurationMs));
+        {
+            foreach (var ov in _overlays)
+                ov.ShowText(ev.Text, ev.IsError, ev.IsFinal, ev.DurationMs);
+        });
     }
 
     private void SubTab_Checked(object sender, RoutedEventArgs e)

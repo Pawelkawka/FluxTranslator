@@ -111,6 +111,10 @@ public class ConfigManager
         if (!AppSettings.OverlayPositions.ContainsKey(Config.OverlayPosition))
             Config.OverlayPosition = AppSettings.DefaultOverlayPosition;
 
+        Config.OverlayMonitor = string.IsNullOrWhiteSpace(Config.OverlayMonitor)
+            ? AppSettings.DefaultOverlayMonitor
+            : Config.OverlayMonitor.Trim().ToLowerInvariant();
+
         Config.TtsLanguage = string.IsNullOrWhiteSpace(Config.TtsLanguage)
             ? AppSettings.DefaultTtsLanguage
             : Config.TtsLanguage.Trim();

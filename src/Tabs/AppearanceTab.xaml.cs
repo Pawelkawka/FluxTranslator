@@ -26,6 +26,7 @@ public partial class AppearanceTab : UserControl
         _config  = config;
         _manager = manager;
         LoadFonts();
+        LoadMonitors();
         LoadValues();
     }
 
@@ -42,6 +43,20 @@ public partial class AppearanceTab : UserControl
             CbFont.Items.Add(family.Source);
     }
 
+    private void LoadMonitors()
+    {
+        CbMonitor.Items.Clear();
+
+        CbMonitor.Items.Add(new ComboBoxItem { Content = "All monitors", Tag = "all" });
+
+        var screens = System.Windows.Forms.Screen.AllScreens;
+        for (int i = 0; i < screens.Length; i++)
+        {
+            string label = $"Monitor {i + 1}";
+            CbMonitor.Items.Add(new ComboBoxItem { Content = label, Tag = i.ToString() });
+        }
+    }
+
     private void LoadValues()
     {
         _loading = true;
@@ -55,6 +70,18 @@ public partial class AppearanceTab : UserControl
             i++;
         }
         CbPosition.SelectedIndex = posIdx;
+
+        int monIdx = 0;
+        for (int m = 0; m < CbMonitor.Items.Count; m++)
+        {
+            if (CbMonitor.Items[m] is ComboBoxItem mItem && mItem.Tag is string mTag &&
+                mTag.Equals(_config.OverlayMonitor, StringComparison.OrdinalIgnoreCase))
+            {
+                monIdx = m;
+                break;
+            }
+        }
+        CbMonitor.SelectedIndex = monIdx;
 
         var fontSrc = _config.FontFamily;
         var match   = CbFont.Items.Cast<string>().FirstOrDefault(f =>
@@ -89,6 +116,13 @@ public partial class AppearanceTab : UserControl
         if (_loading || _config is null) return;
         if (CbPosition.SelectedItem is ComboBoxItem item && item.Tag is string key)
         { _config.OverlayPosition = key; Save(); }
+    }
+
+    private void CbMonitor_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || _config is null) return;
+        if (CbMonitor.SelectedItem is ComboBoxItem item && item.Tag is string key)
+        { _config.OverlayMonitor = key; Save(); }
     }
 
     private void CbFont_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -152,6 +186,7 @@ public partial class AppearanceTab : UserControl
         _config.BorderWidth       = AppSettings.DefaultBorderWidth;
         _config.BorderColor       = AppSettings.DefaultBorderColor;
         _config.OverlayPosition   = AppSettings.DefaultOverlayPosition;
+        _config.OverlayMonitor    = AppSettings.DefaultOverlayMonitor;
         Save();
         LoadValues();
     }

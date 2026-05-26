@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -11,23 +12,36 @@ public partial class OverlayWindow : Window
 {
     [DllImport("user32.dll")] private static extern int  GetWindowLong(IntPtr hWnd, int nIndex);
     [DllImport("user32.dll")] private static extern int  SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+    [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+    [DllImport("shcore.dll")] private static extern int GetDpiForMonitor(IntPtr hMonitor, int dpiType, out uint dpiX, out uint dpiY);
     private const int GWL_EXSTYLE       = -20;
     private const int WS_EX_TRANSPARENT = 0x00000020;
     private const int WS_EX_LAYERED     = 0x00080000;
+    private const uint MONITOR_DEFAULTTONEAREST = 2;
+    private const int MDT_EFFECTIVE_DPI = 0;
 
     private AppConfig      _config;
     private readonly DispatcherTimer _hideTimer;
+    private Screen?        _targetScreen;
 
-    public OverlayWindow(AppConfig config)
+    public OverlayWindow(AppConfig config, Screen? targetScreen = null)
     {
         InitializeComponent();
-        _config    = config;
-        _hideTimer = new DispatcherTimer();
+        _config      = config;
+        _targetScreen  = targetScreen;
+        _hideTimer     = new DispatcherTimer();
         _hideTimer.Tick += (_, _) => HideOverlay();
 
         Loaded += OnLoaded;
         ApplyStyle();
+        MinWidth  = 250;
+        MinHeight = 40;
         Hide();
+    }
+
+    public void SetTargetScreen(Screen? screen)
+    {
+        _targetScreen = screen;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -44,9 +58,12 @@ public partial class OverlayWindow : Window
     public void ShowText(string text, bool isError, bool isFinal, int durationMs = 0)
     {
         if (string.IsNullOrEmpty(text)) { HideOverlay(); return; }
+        if (Dispatcher.HasShutdownStarted) return;
 
         Dispatcher.BeginInvoke(() =>
         {
+            if (Dispatcher.HasShutdownStarted) return;
+
             DisplayText.Text = text;
             DisplayText.Foreground = new SolidColorBrush(
                 isError
@@ -57,12 +74,11 @@ public partial class OverlayWindow : Window
 
             if (!IsVisible)
             {
-                Left = -32000;
-                Top  = -32000;
+                PositionWindow(MinWidth, MinHeight);
                 Show();
             }
-            Dispatcher.BeginInvoke(PositionWindow,
-                System.Windows.Threading.DispatcherPriority.Render);
+            UpdateLayout();
+            PositionWindow();
 
             if (isFinal)
             {
@@ -75,8 +91,12 @@ public partial class OverlayWindow : Window
 
     public void HideOverlay()
     {
+        if (Dispatcher.HasShutdownStarted) return;
+
         Dispatcher.BeginInvoke(() =>
         {
+            if (Dispatcher.HasShutdownStarted) return;
+
             _hideTimer.Stop();
             Hide();
             DisplayText.Text = string.Empty;
@@ -120,23 +140,55 @@ public partial class OverlayWindow : Window
         SetWindowLong(handle, GWL_EXSTYLE, ex | WS_EX_TRANSPARENT | WS_EX_LAYERED);
     }
 
-    private void PositionWindow()
+    public void PositionWindow(double? width = null, double? height = null, Screen? targetScreen = null)
     {
-        UpdateLayout();
-        var screen  = SystemParameters.WorkArea;
-        double w    = ActualWidth  > 0 ? ActualWidth  : MinWidth;
-        double h    = ActualHeight > 0 ? ActualHeight : MinHeight;
+        var screen = targetScreen ?? _targetScreen ?? Screen.PrimaryScreen;
+        var hwnd = new WindowInteropHelper(this).Handle;
+
+        double left, top, right, bottom, areaWidth, areaHeight;
+
+        if (hwnd != IntPtr.Zero && screen is not null)
+        {
+            var hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            double scaleX = 1.0, scaleY = 1.0;
+            if (hMonitor != IntPtr.Zero && GetDpiForMonitor(hMonitor, MDT_EFFECTIVE_DPI, out uint dpiX, out uint dpiY) == 0)
+            {
+                scaleX = 96.0 / dpiX;
+                scaleY = 96.0 / dpiY;
+            }
+
+            var area = screen.WorkingArea;
+            left   = area.Left   * scaleX;
+            top    = area.Top    * scaleY;
+            right  = area.Right  * scaleX;
+            bottom = area.Bottom * scaleY;
+            areaWidth  = area.Width  * scaleX;
+            areaHeight = area.Height * scaleY;
+        }
+        else
+        {
+            var wa = SystemParameters.WorkArea;
+            left   = wa.Left;
+            top    = wa.Top;
+            right  = wa.Right;
+            bottom = wa.Bottom;
+            areaWidth  = wa.Width;
+            areaHeight = wa.Height;
+        }
+
+        double w = width ?? (ActualWidth  > 0 ? ActualWidth  : MinWidth);
+        double h = height ?? (ActualHeight > 0 ? ActualHeight : MinHeight);
         const int margin = 20;
 
         (Left, Top) = _config.OverlayPosition switch
         {
-            "top_left"      => (screen.Left  + margin,                   screen.Top  + margin),
-            "top_center"    => (screen.Left  + (screen.Width  - w) / 2,  screen.Top  + margin),
-            "top_right"     => (screen.Right - w - margin,               screen.Top  + margin),
-            "bottom_left"   => (screen.Left  + margin,                   screen.Bottom - h - margin),
-            "bottom_center" => (screen.Left  + (screen.Width  - w) / 2,  screen.Bottom - h - margin),
-            "bottom_right"  => (screen.Right - w - margin,               screen.Bottom - h - margin),
-            _               => (screen.Left  + (screen.Width  - w) / 2,  screen.Top  + margin),
+            "top_left"      => (left  + margin,                  top  + margin),
+            "top_center"    => (left  + (areaWidth  - w) / 2,    top  + margin),
+            "top_right"     => (right - w - margin,              top  + margin),
+            "bottom_left"   => (left  + margin,                  bottom - h - margin),
+            "bottom_center" => (left  + (areaWidth  - w) / 2,    bottom - h - margin),
+            "bottom_right"  => (right - w - margin,              bottom - h - margin),
+            _               => (left  + (areaWidth  - w) / 2,    top  + margin),
         };
     }
 
