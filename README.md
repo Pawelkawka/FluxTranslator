@@ -70,6 +70,10 @@ You can customize the output directory:
 ```powershell
 -OutputDir "set path" 
 ```
+6. Install python dependencies:
+   ```bash
+   pip install -r requirements.txt
+
 
 > [!IMPORTANT]
 > For FluxTranslator to work correctly first run `fluxhelper.py` then run `FluxTranslator.exe`
