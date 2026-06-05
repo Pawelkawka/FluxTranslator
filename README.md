@@ -44,7 +44,7 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
 - **Model management** directly from the app.
 - **Voice TTS** When using VBCable to route audio to the microphone. This is useful when you want to speak in your own language and pass the translated voice output into another app or call.
 
-## Installation
+## How to install
 
 ### Requirements
 - .NET 8 SDK or later
@@ -52,6 +52,16 @@ FluxTranslator is a Windows desktop overlay for speech to text translation. It l
 - Python 3.14
 - FFmpeg
 - VBCable if you want to feed Voice TTS into a microphone input
+
+### Installation
+1. Go to the [Releases](https://github.com/desertseller/fluxtranslator/releases).
+2. Download `FluxTranslator_Setup.exe`.
+3. Run the installer and follow the instructions.
+4. Launch the app via the Desktop shortcut or Start Menu.
+
+> [!WARNING]
+> #### Windows SmartScreen
+> Because this project is free and open source the installer does not come with a digital certificate. Windows may display a SmartScreen message when you first run it.
 
 ### Build from source
 
@@ -61,9 +71,9 @@ Building locally ensures the exe has a unique binary signature.
 2. Download the latest source code.
 3. Open a PowerShell in the repository.
 4. Run script:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\build.ps1
-   ```
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1
+```
 5. The compiled output lands in the `build\` folder. Run `FluxTranslator.exe` from there.
 
 You can customize the output directory:

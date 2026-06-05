@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using FluxTranslator.Core;
 using FluxTranslator.TrayIcon;
@@ -11,6 +13,7 @@ public partial class App : Application
     private Mutex?           _singleInstanceMutex;
     private TrayIconManager? _tray;
     private MainWindow?      _mainWindow;
+    private Process?         _fluxHelperProcess;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -43,6 +46,8 @@ public partial class App : Application
 
         base.OnStartup(e);
 
+        StartFluxHelper();
+
         _tray = new TrayIconManager();
         _tray.ShowRequested += OnTrayShow;
         _tray.ExitRequested += OnTrayExit;
@@ -50,6 +55,72 @@ public partial class App : Application
         _mainWindow = new MainWindow();
         MainWindow  = _mainWindow;
         _mainWindow.Show();
+    }
+
+    private void StartFluxHelper()
+    {
+        try
+        {
+            var appDir = AppDomain.CurrentDomain.BaseDirectory;
+            var fluxHelperPath = Path.Combine(appDir, "FluxHelper.exe");
+
+            if (!File.Exists(fluxHelperPath))
+            {
+                AppLogger.Warn($"FluxHelper.exe not found at: {fluxHelperPath}");
+                return;
+            }
+
+            var psi = new ProcessStartInfo
+            {
+                FileName        = fluxHelperPath,
+                UseShellExecute = false,
+                CreateNoWindow  = true,
+                WorkingDirectory = appDir,
+            };
+
+            psi.EnvironmentVariables["FLUXTRANSLATOR_PID"] = Environment.ProcessId.ToString();
+
+            _fluxHelperProcess = new Process
+            {
+                StartInfo = psi,
+                EnableRaisingEvents = true,
+            };
+
+            _fluxHelperProcess.Exited += (_, _) =>
+                AppLogger.Info("FluxHelper process exited.");
+
+            _fluxHelperProcess.Start();
+            AppLogger.Info($"FluxHelper started (PID: {_fluxHelperProcess.Id})");
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"Failed to start FluxHelper: {ex.Message}");
+        }
+    }
+
+    private void StopFluxHelper()
+    {
+        if (_fluxHelperProcess is null)
+            return;
+
+        try
+        {
+            if (!_fluxHelperProcess.HasExited)
+            {
+                AppLogger.Info("Stopping FluxHelper backend...");
+                _fluxHelperProcess.Kill();
+                _fluxHelperProcess.WaitForExit(5000);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Warn($"Error stopping FluxHelper: {ex.Message}");
+        }
+        finally
+        {
+            _fluxHelperProcess.Dispose();
+            _fluxHelperProcess = null;
+        }
     }
 
     private void OnTrayShow()
@@ -77,6 +148,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _tray?.Dispose();
+        StopFluxHelper();
         _singleInstanceMutex?.ReleaseMutex();
         _singleInstanceMutex?.Dispose();
         _singleInstanceMutex = null;

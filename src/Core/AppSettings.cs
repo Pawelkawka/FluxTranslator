@@ -11,7 +11,7 @@ public static class AppSettings
     public const string AppName         = "FluxTranslator";
     public const string AppPublisher    = "desertseller";
     public const string AppBaseVersion  = "1.4.0";
-    public const string AppBuild        = "2605202601";
+    public const string AppBuild        = "0506202601";
     public const string AppVersion      = AppBaseVersion + "." + AppBuild;
     public const int    SttPort         = 5001;
 
