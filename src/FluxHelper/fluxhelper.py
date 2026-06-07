@@ -2,6 +2,7 @@
 import threading
 import time
 import logging
+import ctypes
 
 from flask import Flask, request, jsonify
 
@@ -250,16 +251,24 @@ def list_tts_devices():
         log.error("Error listing TTS devices: %s", exc)
         return jsonify({"ok": False, "error": str(exc)}), 500
 
-# ── Entry point ──────────────────────────────────────────────────────
+# single instance mutex
+
+def ensure_single_instance():
+    MUTEX_NAME = "Global\\FluxHelper"
+    mutex = ctypes.windll.kernel32.CreateMutexW(None, False, MUTEX_NAME)
+    if ctypes.GetLastError() == 183:
+        logging.warning("FluxHelper is already running")
+        ctypes.windll.kernel32.CloseHandle(mutex)
+        sys.exit(0)
+    return mutex
+
+#entry point
 
 if __name__ == "__main__":
+    mutex_handle = ensure_single_instance()
     try:
         port = int(sys.argv[1]) if len(sys.argv) > 1 else 5001
-    except ValueError as exc:
-        raise SystemExit("Port must be an integer.") from exc
-
-    if not 1 <= port <= 65535:
-        raise SystemExit("Port must be between 1 and 65535.")
-
-    log.info("FluxHelper server starting on port %d", port)
-    app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False)
+        log.info("FluxHelper server starting on port %d", port)
+        app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False)
+    finally:
+        ctypes.windll.kernel32.CloseHandle(mutex_handle)
