@@ -206,12 +206,17 @@
                                 <Border Background="{StaticResource SurfaceBrush}"
                                         BorderBrush="{StaticResource BorderBrush}"
                                         BorderThickness="1"
-                                        CornerRadius="6"
-                                        ClipToBounds="True">
-                                    <ScrollViewer Background="Transparent"
-                                                  VerticalScrollBarVisibility="Auto">
-                                        <ItemsPresenter/>
-                                    </ScrollViewer>
+                                        CornerRadius="6">
+                                    <Grid>
+                                        <Border x:Name="Mask" Background="{StaticResource SurfaceBrush}" CornerRadius="5" />
+                                        <ScrollViewer Background="Transparent"
+                                                      VerticalScrollBarVisibility="Auto">
+                                            <ScrollViewer.OpacityMask>
+                                                <VisualBrush Visual="{Binding ElementName=Mask}" />
+                                            </ScrollViewer.OpacityMask>
+                                            <ItemsPresenter/>
+                                        </ScrollViewer>
+                                    </Grid>
                                 </Border>
                             </Border>
                         </Popup>
