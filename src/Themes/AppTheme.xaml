@@ -162,11 +162,16 @@
                                                 <ColumnDefinition Width="24"/>
                                             </Grid.ColumnDefinitions>
                                             <Rectangle Grid.Column="0" Fill="Transparent"/>
-                                            <Path Grid.Column="1" Data="M0,0 L4,5 L8,0"
+                                            <Path x:Name="Arrow" Grid.Column="1" Data="M0,0 L4,5 L8,0"
                                                   Stroke="{StaticResource TextSecondaryBrush}"
                                                   StrokeThickness="1.5"
                                                   HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center"/>
+                                                  VerticalAlignment="Center"
+                                                  RenderTransformOrigin="0.5,0.5">
+                                                <Path.RenderTransform>
+                                                    <RotateTransform Angle="0"/>
+                                                </Path.RenderTransform>
+                                            </Path>
                                         </Grid>
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -175,6 +180,11 @@
                                         </Trigger>
                                         <Trigger Property="IsChecked" Value="True">
                                             <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                            <Setter TargetName="Arrow" Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <RotateTransform Angle="180"/>
+                                                </Setter.Value>
+                                            </Setter>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
