@@ -71,10 +71,20 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock x:Name="LblStatus"
-                       Foreground="{StaticResource TextSecondaryBrush}"
-                       FontSize="11" Margin="0,8,0,0"
-                       TextWrapping="Wrap"/>
+            <Grid Margin="0,12,0,0">
+                <TextBlock x:Name="LblStatus"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="11"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center"
+                           Visibility="Collapsed"
+                           Margin="0,0,8,0"/>
+                <Button x:Name="BtnReset"
+                        Content="Reset to Defaults"
+                        Style="{StaticResource ModernButton}"
+                        HorizontalAlignment="Right"
+                        Click="BtnReset_Click"/>
+            </Grid>
 
         </StackPanel>
     </ScrollViewer>
