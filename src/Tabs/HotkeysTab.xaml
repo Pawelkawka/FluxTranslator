@@ -19,7 +19,7 @@
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="200"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Toggle Translation" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
@@ -37,7 +37,7 @@
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="200"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Copy Translated Text" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
@@ -55,7 +55,7 @@
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="200"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Kill Overlay" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
