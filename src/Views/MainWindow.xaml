@@ -25,39 +25,48 @@
                 Background="{StaticResource SurfaceBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
                 BorderThickness="0,0,0,1">
-            <StackPanel x:Name="SttSubTabBar" Orientation="Horizontal" Margin="4,0">
-                <RadioButton x:Name="SubTabGeneral"
-                             Content="General"
-                             GroupName="SttTabs"
-                             Tag="General"
-                             Style="{StaticResource SubTabButton}"
-                             IsChecked="True"
-                             Checked="SubTab_Checked"/>
-                <RadioButton x:Name="SubTabAppearance"
-                             Content="Appearance"
-                             GroupName="SttTabs"
-                             Tag="Appearance"
-                             Style="{StaticResource SubTabButton}"
-                             Checked="SubTab_Checked"/>
-                <RadioButton x:Name="SubTabBehavior"
-                             Content="Behavior"
-                             GroupName="SttTabs"
-                             Tag="Behavior"
-                             Style="{StaticResource SubTabButton}"
-                             Checked="SubTab_Checked"/>
-                <RadioButton x:Name="SubTabHotkeys"
-                             Content="Hotkeys"
-                             GroupName="SttTabs"
-                             Tag="Hotkeys"
-                             Style="{StaticResource SubTabButton}"
-                             Checked="SubTab_Checked"/>
-                <RadioButton x:Name="SubTabTts"
-                             Content="Voice TTS"
-                             GroupName="SttTabs"
-                             Tag="Tts"
-                             Style="{StaticResource SubTabButton}"
-                             Checked="SubTab_Checked"/>
-            </StackPanel>
+            <Grid>
+                <StackPanel x:Name="SttSubTabBar" Orientation="Horizontal" Margin="4,0">
+                    <RadioButton x:Name="SubTabGeneral"
+                                 Content="General"
+                                 GroupName="SttTabs"
+                                 Tag="General"
+                                 Style="{StaticResource SubTabButton}"
+                                 IsChecked="True"
+                                 Checked="SubTab_Checked"/>
+                    <RadioButton x:Name="SubTabAppearance"
+                                 Content="Appearance"
+                                 GroupName="SttTabs"
+                                 Tag="Appearance"
+                                 Style="{StaticResource SubTabButton}"
+                                 Checked="SubTab_Checked"/>
+                    <RadioButton x:Name="SubTabBehavior"
+                                 Content="Behavior"
+                                 GroupName="SttTabs"
+                                 Tag="Behavior"
+                                 Style="{StaticResource SubTabButton}"
+                                 Checked="SubTab_Checked"/>
+                    <RadioButton x:Name="SubTabHotkeys"
+                                 Content="Hotkeys"
+                                 GroupName="SttTabs"
+                                 Tag="Hotkeys"
+                                 Style="{StaticResource SubTabButton}"
+                                 Checked="SubTab_Checked"/>
+                    <RadioButton x:Name="SubTabTts"
+                                 Content="Voice TTS"
+                                 GroupName="SttTabs"
+                                 Tag="Tts"
+                                 Style="{StaticResource SubTabButton}"
+                                 Checked="SubTab_Checked"/>
+                </StackPanel>
+
+                <Canvas HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="2" Margin="4,0" IsHitTestVisible="False">
+                    <Border x:Name="TabIndicator"
+                            Height="2"
+                            Background="{DynamicResource AccentBrush}"
+                            CornerRadius="1,1,0,0"/>
+                </Canvas>
+            </Grid>
         </Border>
 
         <Grid Grid.Row="1">

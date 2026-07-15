@@ -117,6 +117,20 @@ public partial class MainWindow : Window
 
         _hotkeys.Attach(this);
         RegisterHotkeys();
+
+        RadioButton? activeTab = null;
+        foreach (var child in SttSubTabBar.Children)
+        {
+            if (child is RadioButton { IsChecked: true } rb)
+            {
+                activeTab = rb;
+                break;
+            }
+        }
+        if (activeTab != null)
+        {
+            UpdateTabIndicator(activeTab, false);
+        }
     }
 
     private async void OnBackendReady()
@@ -240,6 +254,8 @@ public partial class MainWindow : Window
             if (ReferenceEquals(target, TabTts))
                 TabTts.RefreshOutputDevices();
         }
+
+        UpdateTabIndicator(rb, true);
     }
 
     private static void AnimateTab(UIElement tab)
@@ -253,5 +269,61 @@ public partial class MainWindow : Window
             Duration = new Duration(TimeSpan.FromMilliseconds(160)),
         };
         tab.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+    }
+
+    private void UpdateTabIndicator(RadioButton rb, bool animate)
+    {
+        if (TabIndicator == null || SttSubTabBar == null) return;
+
+        if (!IsLoaded) return;
+
+        try
+        {
+            var relativePoint = rb.TransformToAncestor(SttSubTabBar).Transform(new Point(0, 0));
+            double targetX = relativePoint.X;
+            double targetWidth = rb.ActualWidth;
+
+            if (targetWidth <= 0)
+            {
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+                {
+                    UpdateTabIndicator(rb, false);
+                }));
+                return;
+            }
+
+            double indicatorWidth = Math.Max(0, targetWidth - 8);
+            double indicatorX = targetX + 4;
+
+            if (animate)
+            {
+                var animX = new DoubleAnimation
+                {
+                    To = indicatorX,
+                    Duration = TimeSpan.FromMilliseconds(200),
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
+                };
+                var animW = new DoubleAnimation
+                {
+                    To = indicatorWidth,
+                    Duration = TimeSpan.FromMilliseconds(200),
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
+                };
+
+                TabIndicator.BeginAnimation(Canvas.LeftProperty, animX);
+                TabIndicator.BeginAnimation(WidthProperty, animW);
+            }
+            else
+            {
+                TabIndicator.BeginAnimation(Canvas.LeftProperty, null);
+                TabIndicator.BeginAnimation(WidthProperty, null);
+                Canvas.SetLeft(TabIndicator, indicatorX);
+                TabIndicator.Width = indicatorWidth;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Tab indicator error: {ex}");
+        }
     }
 }

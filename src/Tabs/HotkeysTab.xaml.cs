@@ -81,7 +81,7 @@ public partial class HotkeysTab : UserControl
         TbTransHotkey.Text = _config.HotkeyTranslate;
         TbCopyHotkey.Text  = _config.HotkeyCopy;
         TbKillHotkey.Text  = _config.HotkeyKillAll;
-        LblStatus.Text     = string.Empty;
+        SetStatus(string.Empty);
     }
 
     public void TbHotkey_GotFocus(object s, RoutedEventArgs e)
@@ -93,7 +93,7 @@ public partial class HotkeysTab : UserControl
             else if (tb == TbCopyHotkey) _prevCopy = tb.Text;
             else if (tb == TbKillHotkey) _prevKill = tb.Text;
         }
-        LblStatus.Text = "Press a key combination or mouse button (e.g. Ctrl+M or LButton). Press ESC to cancel.";
+        SetStatus("Press a key combination or mouse button (e.g. Ctrl+M or LButton). Press ESC to cancel.");
     }
 
     public void TbHotkey_LostFocus(object s, RoutedEventArgs e)
@@ -131,7 +131,7 @@ public partial class HotkeysTab : UserControl
     {
         e.Handled  = true;
         tb.Text    = original;
-        LblStatus.Text = "Cancelled.";
+        SetStatus("Cancelled.");
         Keyboard.ClearFocus();
     }
 
@@ -180,7 +180,7 @@ public partial class HotkeysTab : UserControl
 
         if (HasConflict(newHotkey, currentValue))
         {
-            LblStatus.Text = "⚠ Conflict: this hotkey is already used by another action.";
+            SetStatus("⚠ Conflict: this hotkey is already used by another action.");
             textBox.Text   = previousValue;
             return;
         }
@@ -188,7 +188,7 @@ public partial class HotkeysTab : UserControl
         persist(newHotkey);
         _manager.Save();
         HotkeysChanged?.Invoke();
-        LblStatus.Text = string.Empty;
+        SetStatus(string.Empty);
         AppLogger.Info($"{logLabel} hotkey updated: {newHotkey}");
         Keyboard.ClearFocus();
     }
@@ -204,4 +204,23 @@ public partial class HotkeysTab : UserControl
     private void SaveKillHotkey(string newHotkey) =>
         SaveHotkey(newHotkey, _config.HotkeyKillAll, _prevKill, TbKillHotkey,
             v => _config.HotkeyKillAll = v, "Kill");
+
+    private void BtnReset_Click(object sender, RoutedEventArgs e)
+    {
+        if (_config is null) return;
+        _config.HotkeyTranslate = AppSettings.DefaultHotkeyTranslate;
+        _config.HotkeyCopy      = AppSettings.DefaultHotkeyCopy;
+        _config.HotkeyKillAll   = AppSettings.DefaultHotkeyKillAll;
+        _manager.Save();
+        HotkeysChanged?.Invoke();
+        LoadValues();
+    }
+
+    private void SetStatus(string text)
+    {
+        LblStatus.Text       = text;
+        LblStatus.Visibility = string.IsNullOrEmpty(text)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+    }
 }

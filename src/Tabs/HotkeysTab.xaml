@@ -19,7 +19,7 @@
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="200"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Toggle Translation" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
@@ -37,7 +37,7 @@
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="200"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Copy Translated Text" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
@@ -55,7 +55,7 @@
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="200"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Kill Overlay" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
@@ -71,10 +71,20 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock x:Name="LblStatus"
-                       Foreground="{StaticResource TextSecondaryBrush}"
-                       FontSize="11" Margin="0,8,0,0"
-                       TextWrapping="Wrap"/>
+            <Grid Margin="0,12,0,0">
+                <TextBlock x:Name="LblStatus"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="11"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center"
+                           Visibility="Collapsed"
+                           Margin="0,0,8,0"/>
+                <Button x:Name="BtnReset"
+                        Content="Reset to Defaults"
+                        Style="{StaticResource ModernButton}"
+                        HorizontalAlignment="Right"
+                        Click="BtnReset_Click"/>
+            </Grid>
 
         </StackPanel>
     </ScrollViewer>
