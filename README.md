@@ -2,6 +2,8 @@
    <h1>FluxTranslator</h1>
 </div>
 
+### archived / no longer maintained
+
 FluxTranslator is a Windows desktop overlay for speech to text translation. It listens to your microphone, recognises speech, translates it in real time and displays the result in a compact on screen overlay. Supports Voice TTS, translated audio can be routed to microphone via VBCable so other apps can receive the translated speech as mic input.
 
 <p align="center">
